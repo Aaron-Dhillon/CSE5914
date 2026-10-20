@@ -142,10 +142,11 @@ def sync_ticketmaster_events(engine, college_key="ohio_state", radius=30):
             try:
                 params = map_to_schema(raw, college)
                 cursor.execute(QUERY, params)
+                raw_conn.commit()  # per row, so one bad event's rollback doesn't discard the rest
                 success += 1
             except Exception as e:
                 raw_conn.rollback()
-        raw_conn.commit()
     finally:
         raw_conn.close()
+    return success
 
