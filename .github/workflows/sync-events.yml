@@ -1,0 +1,24 @@
+name: Sync Ticketmaster events
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # daily, 5am Columbus time
+  workflow_dispatch: # "Run workflow" button in the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install sqlalchemy psycopg2-binary requests python-dotenv
+      - run: python backend/utils/sync_events.py
+        env:
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
+          DB_USER: ${{ secrets.DB_USER }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          HOST: ${{ secrets.HOST }}
+          PORT: ${{ secrets.PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
