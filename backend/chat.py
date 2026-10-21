@@ -28,9 +28,13 @@ class ChatRequest(BaseModel):
 
 # Per-user chat limits: (max messages, window in seconds), shortest window first
 CHAT_LIMITS = [(15, 5 * 60), (25, 10 * 60), (40, 60 * 60)]
+# Public demo account (login shared on LinkedIn) gets more room, since many people share it
+DEMO_USER_ID = "6565250a-54e6-48ff-81a7-caed007e3526"
+DEMO_CHAT_LIMITS = [(20, 5 * 60), (60, 60 * 60), (150, 24 * 60 * 60)]
 
 def check_chat_limit(user_id: str) -> None:
-    rate_limit.check(f"chat:{user_id}", CHAT_LIMITS, "chat messages")
+    limits = DEMO_CHAT_LIMITS if user_id == DEMO_USER_ID else CHAT_LIMITS
+    rate_limit.check(f"chat:{user_id}", limits, "chat messages")
     rate_limit.record(f"chat:{user_id}")
 
 def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
