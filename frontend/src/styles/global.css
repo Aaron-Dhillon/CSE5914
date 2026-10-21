@@ -37,3 +37,9 @@ input, button, textarea, select { font: inherit; }
   height: 1px; width: 1px; overflow: hidden;
   clip: rect(1px, 1px, 1px, 1px); white-space: nowrap;
 }
+
+/* Brutus glove for anything clickable; hotspot is the fingertip */
+a, button, select, summary, label[for],
+[role="link"], [role="button"], [role="radio"], [role="switch"] {
+  cursor: var(--cursor-hand);
+}

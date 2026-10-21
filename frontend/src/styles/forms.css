@@ -13,7 +13,7 @@
 .pills--wrap { flex-wrap: wrap; overflow: visible; margin-top: 0; }
 
 .form-side { position: sticky; top: 92px; display: flex; flex-direction: column; }
-.dropzone { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; border: 2px dashed rgba(255,255,255,.15); background: var(--color-surface); cursor: pointer; display: grid; place-items: center; outline: none; }
+.dropzone { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; border: 2px dashed rgba(255,255,255,.15); background: var(--color-surface); cursor: var(--cursor-hand); display: grid; place-items: center; outline: none; }
 .dropzone:hover, .dropzone:focus-visible { border-color: rgba(255,255,255,.35); }
 .dropzone.has-photo { border-style: solid; border-color: transparent; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
 .dropzone img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

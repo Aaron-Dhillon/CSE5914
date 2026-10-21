@@ -20,7 +20,7 @@
 }
 .events-row::-webkit-scrollbar { display: none; }
 
-.event-tile { cursor: pointer; scroll-snap-align: start; outline: none; min-width: 0; }
+.event-tile { cursor: var(--cursor-hand); scroll-snap-align: start; outline: none; min-width: 0; }
 .event-tile-art {
   border-radius: 14px;
   overflow: hidden;
@@ -41,7 +41,7 @@
 .shelf { margin-top: 40px; scroll-margin-top: 90px; }
 .shelf-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; gap: 12px; }
 .shelf-h h2 { font-size: 21px; letter-spacing: -0.02em; margin: 0; }
-.shelf-link { font-size: 14px; color: var(--color-link); font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; }
+.shelf-link { font-size: 14px; color: var(--color-link); font-weight: 600; background: none; border: 0; padding: 0; cursor: var(--cursor-hand); }
 .shelf-link:hover { text-decoration: underline; border: 0; }
 
 /* ---------- Featured banner ---------- */
@@ -62,7 +62,7 @@
 .tools .btn { height: 48px; border-radius: 14px; white-space: nowrap; }
 .pills { display: flex; gap: 8px; margin-top: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .pills::-webkit-scrollbar { display: none; }
-.pill { flex: none; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; color: #a3a3b2; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); cursor: pointer; }
+.pill { flex: none; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; color: #a3a3b2; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); cursor: var(--cursor-hand); }
 .pill:hover { color: var(--color-text); border-color: rgba(255,255,255,.2); }
 .pill.on { background: #fff; color: #0b0d12; border-color: #fff; }
 

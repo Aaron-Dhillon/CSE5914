@@ -18,7 +18,7 @@
 .try-asking .brutus-img { width: 120px; height: auto; margin: auto 0 -10px auto; }
 
 .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
-.poster { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 4 / 5; background: var(--color-surface-solid); cursor: pointer; outline: none; }
+.poster { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 4 / 5; background: var(--color-surface-solid); cursor: var(--cursor-hand); outline: none; }
 .poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
 .poster:hover img, .poster:focus-visible img { transform: scale(1.05); }
 .poster::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.9) 10%, rgba(0,0,0,.1) 60%); }
@@ -28,7 +28,7 @@
 .poster p { font-size: 13px; color: #c2c2cf; margin: 4px 0 0; }
 
 .group-strip { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; }
-.group-chip { flex: 0 0 260px; padding: 18px; cursor: pointer; transition: border-color .2s; }
+.group-chip { flex: 0 0 260px; padding: 18px; cursor: var(--cursor-hand); transition: border-color .2s; }
 .group-chip:hover { border-color: rgba(255,255,255,.2); }
 .group-chip h3 { font-size: 15px; margin: 0; text-transform: capitalize; }
 .group-chip p { font-size: 13px; color: var(--color-text-muted); margin: 4px 0 0; }
