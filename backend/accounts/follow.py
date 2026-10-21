@@ -31,6 +31,10 @@ async def get_public_profile(username: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return {
+        'id': str(row.get('id')),
+        'display_name': row.get('display_name'),
+        'followers': row.get('followers') or 0,
+        'following': row.get('following') or 0,
         'bio': row.get('bio'),
         'major': row.get('major'),
         'graduation_year': row.get('graduation_year'),

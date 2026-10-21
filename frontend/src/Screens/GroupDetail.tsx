@@ -463,7 +463,13 @@ const GroupDetail: React.FC = () => {
                         <div key={jr.id} className="list-row">
                           <div className="avatar-sm" aria-hidden="true">{(jr.display_name || jr.email || '?').charAt(0).toUpperCase()}</div>
                           <div className="list-row-main">
-                            <strong>{jr.display_name || jr.email}</strong>
+                            {jr.display_name ? (
+                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${encodeURIComponent(jr.display_name!)}`)}>
+                                {jr.display_name}
+                              </button>
+                            ) : (
+                              <strong>{jr.email}</strong>
+                            )}
                             <span className="muted">{new Date(jr.created_at).toLocaleDateString()}</span>
                           </div>
                           <Button className="btn-sm" onClick={() => handleApprove(jr.id)} disabled={actionLoading}>Approve</Button>
@@ -483,7 +489,15 @@ const GroupDetail: React.FC = () => {
                       {members.map((m) => (
                         <div key={m.user_id} className="list-row">
                           <div className="avatar-sm" aria-hidden="true">{(m.display_name || m.email || '?').charAt(0).toUpperCase()}</div>
-                          <div className="list-row-main"><strong>{m.display_name || m.email}</strong></div>
+                          <div className="list-row-main">
+                            {m.display_name ? (
+                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${encodeURIComponent(m.display_name!)}`)}>
+                                {m.display_name}
+                              </button>
+                            ) : (
+                              <strong>{m.email}</strong>
+                            )}
+                          </div>
                           {canManage && m.role !== 'owner' ? (
                             <select
                               className="input role-select"

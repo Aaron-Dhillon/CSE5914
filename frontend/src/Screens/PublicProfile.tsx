@@ -1,15 +1,37 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { Heading, Text, Card, Button, LazyImage } from '../components/ui'
+import { Heading, Text, Button } from '../components/ui'
+import { EventGrid } from '../components/events'
+import type { EventItem } from '../services/events'
+import { request } from '../services/api'
+import { useAuthContext } from '../context/AuthContext'
+import '../styles/events.css'
+import '../styles/profile.css'
+
+type PublicUser = {
+  id: string
+  display_name: string
+  bio: string | null
+  major: string | null
+  graduation_year: number | null
+  has_car: boolean | null
+  verified: boolean | null
+  interests: string[]
+  followers: number
+  following: number
+}
 
 const PublicProfile: React.FC = () => {
   const { username } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuthContext()
   const [loading, setLoading] = useState(true)
-  const [userData, setUserData] = useState<any>(null)
+  const [userData, setUserData] = useState<PublicUser | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+  const [events, setEvents] = useState<EventItem[]>([])
 
   useEffect(() => {
     let mounted = true
@@ -18,20 +40,23 @@ const PublicProfile: React.FC = () => {
       setError(null)
       try {
         if (!username) throw new Error('No username provided')
-        const { request } = await import('../services/api')
+        const name = encodeURIComponent(username)
         const [data, followData] = await Promise.all([
-          request(`/follow/${encodeURIComponent(username)}/publicProfile`),
-          request(`/follow/${encodeURIComponent(username)}/isFollowing`).catch(() => ({ following: false }))
+          request(`/follow/${name}/publicProfile`),
+          request(`/follow/${name}/isFollowing`).catch(() => ({ following: false })),
         ])
         if (!mounted) return
-        // Normalize response: ensure interests is an array
-        try { console.debug('publicProfile response:', data) } catch {}
-        const normalized = { ...data }
-        if (normalized && normalized.interests && typeof normalized.interests === 'string') {
-          try { normalized.interests = JSON.parse(normalized.interests) } catch { normalized.interests = [] }
-        }
-        setUserData(normalized)
-        setFollowing(followData.following)
+        const interests = typeof data.interests === 'string' ? JSON.parse(data.interests || '[]') : (data.interests || [])
+        setUserData({ ...data, interests })
+        setFollowing(Boolean(followData.following))
+
+        // Their upcoming events (needs a login; quietly skipped otherwise)
+        const created = await request(`/events/${encodeURIComponent(data.id)}/event`).catch(() => [])
+        if (!mounted) return
+        const now = Date.now()
+        setEvents((created || [])
+          .filter((e: any) => !e.start_time || new Date(e.start_time).getTime() >= now)
+          .map((e: any) => ({ id: e.id, title: e.title, date: e.start_time, location: e.location_name || '', thumbnail: e.image_url || '' })))
       } catch (e: any) {
         if (mounted) setError(e?.message || 'Failed to load user')
       } finally {
@@ -46,14 +71,10 @@ const PublicProfile: React.FC = () => {
     if (!username || followLoading) return
     setFollowLoading(true)
     try {
-      const { request } = await import('../services/api')
-      if (following) {
-        await request(`/follow/${encodeURIComponent(username)}`, { method: 'DELETE' })
-        setFollowing(false)
-      } else {
-        await request(`/follow/${encodeURIComponent(username)}`, { method: 'POST' })
-        setFollowing(true)
-      }
+      const name = encodeURIComponent(username)
+      await request(`/follow/${name}`, { method: following ? 'DELETE' : 'POST' })
+      setUserData((u) => u ? { ...u, followers: u.followers + (following ? -1 : 1) } : u)
+      setFollowing(!following)
     } catch (e: any) {
       alert(e?.message || 'Failed to update follow status')
     } finally {
@@ -61,72 +82,81 @@ const PublicProfile: React.FC = () => {
     }
   }
 
+  const isMe = Boolean(user && userData && user.user_id === userData.id)
+
   return (
     <PageWrapper>
       <MainContent>
+        <button type="button" className="back-link" onClick={() => navigate(-1)}>‹ Back</button>
+
         {loading ? (
           <Heading level={2}>Loading…</Heading>
-        ) : error ? (
-          <div>
-            <Heading level={2}>Error</Heading>
-            <Text as="div">{error}</Text>
-          </div>
-        ) : userData ? (
-          <div className="detail-card detail-card--centered">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <LazyImage src={userData.avatar || '/block.jpg'} alt={username || 'profile'} width={96} height={96} className="detail-avatar" />
-                <div>
-                  <Heading level={1}>{username}</Heading>
-                  <Text as="p" style={{ color: 'var(--muted)' }}>
-                    {userData.major ? userData.major : ''}{(userData.major && (userData.graduation_year || userData.graduationYear)) ? ' • ' : ''}{userData.graduation_year ?? userData.graduationYear ?? ''}
-                  </Text>
-                </div>
-              </div>
-
-              <div>
-                <Button onClick={handleFollow} disabled={followLoading} className={following ? 'btn--secondary' : ''}>
-                  {followLoading ? '…' : following ? 'Following' : 'Follow'}
-                </Button>
-              </div>
-            </div>
-
-            <Card className="card card--elevated mt-2">
-              <div style={{ padding: 12 }}>
-                <Heading level={2} className="section-title">Bio</Heading>
-                <Text as="p">{userData.bio || 'No bio provided.'}</Text>
-
-                <Heading level={2} className="section-title" style={{ marginTop: 12 }}>Interests</Heading>
-                {userData.interests && userData.interests.length ? (
-                  <Text as="p">{(userData.interests || []).join(', ')}</Text>
-                ) : (
-                  <Text as="p">No public interests listed.</Text>
-                )}
-
-                <div style={{ marginTop: 12, display: 'flex', gap: 16 }}>
-                  <Text as="p" style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <strong>Verified:</strong>
-                    <span aria-hidden style={{ color: userData.verified ? 'var(--ok, #16a34a)' : 'var(--error, #dc2626)' }}>
-                      {userData.verified ? '✔' : '✖'}
-                    </span>
-                  </Text>
-
-                  <Text as="p" style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <strong>Has car:</strong>
-                    <span aria-hidden style={{ color: userData.has_car ? 'var(--ok, #16a34a)' : 'var(--error, #dc2626)' }}>
-                      {userData.has_car ? '✔' : '✖'}
-                    </span>
-                  </Text>
-                </div>
-
-                <Text as="p" style={{ marginTop: 12, color: 'var(--muted)' }}>
-                  Public profile — not editable.
-                </Text>
-              </div>
-            </Card>
+        ) : error || !userData ? (
+          <div className="card detail-empty">
+            <Heading level={2}>{error ? 'Something went wrong' : 'User not found'}</Heading>
+            {error ? <Text as="p" className="muted">{error}</Text> : null}
           </div>
         ) : (
-          <Heading level={2}>User not found</Heading>
+          <>
+            <section className="card profile-head" style={{ marginTop: 12 }}>
+              <div className="profile-banner" aria-hidden="true" />
+              <div className="profile-info">
+                <div className="profile-avatar" aria-hidden="true">{(userData.display_name || '?').charAt(0).toUpperCase()}</div>
+                <div>
+                  <h1>
+                    {userData.display_name}
+                    {userData.verified ? <span className="profile-badge profile-badge--ok">● Verified</span> : null}
+                  </h1>
+                  <p className="muted">
+                    {[userData.major, userData.graduation_year ? `Class of ${userData.graduation_year}` : ''].filter(Boolean).join(' · ') || 'Ohio State student'}
+                  </p>
+                </div>
+                <div className="public-side">
+                  <div className="profile-stats">
+                    <div><b>{userData.followers}</b><span>Followers</span></div>
+                    <div><b>{userData.following}</b><span>Following</span></div>
+                    <div><b>{events.length}</b><span>Upcoming</span></div>
+                  </div>
+                  {isMe ? (
+                    <Button variant="ghost" onClick={() => navigate('/profile')}>Edit profile</Button>
+                  ) : user ? (
+                    <Button variant={following ? 'ghost' : 'white'} onClick={handleFollow} disabled={followLoading}>
+                      {followLoading ? '…' : following ? '✓ Following' : '＋ Follow'}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              {userData.bio ? <p className="profile-bio">{userData.bio}</p> : null}
+            </section>
+
+            <div className="profile-cols">
+              <section className="card profile-panel">
+                <h2>Interests</h2>
+                {userData.interests.length ? (
+                  <div className="profile-chips">
+                    {userData.interests.map((name) => <span key={name} className="pill on" style={{ cursor: 'default' }}>{name}</span>)}
+                  </div>
+                ) : (
+                  <p className="muted" style={{ margin: 0 }}>No interests picked yet.</p>
+                )}
+              </section>
+              <section className="card profile-panel">
+                <h2>Getting around</h2>
+                <p className="muted" style={{ margin: 0 }}>
+                  {userData.has_car ? '🚗 Has a car, can drive to events off campus.' : '🚶 No car, sticks to events they can walk or bus to.'}
+                </p>
+              </section>
+            </div>
+
+            <section className="shelf" style={{ marginBottom: 72 }}>
+              <div className="shelf-h"><h2>Their upcoming events</h2></div>
+              {events.length ? (
+                <EventGrid layout="row" events={events} onEventClick={(id) => navigate(`/events/${id}`)} />
+              ) : (
+                <p className="muted">{user ? 'No upcoming events created.' : 'Sign in to see their events.'}</p>
+              )}
+            </section>
+          </>
         )}
       </MainContent>
     </PageWrapper>

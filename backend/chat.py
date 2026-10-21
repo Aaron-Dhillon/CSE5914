@@ -28,8 +28,8 @@ class ChatRequest(BaseModel):
     history: List[Message]
     user_id: Optional[str] = None  # ignored: the login token decides who is chatting
 
-# Per-user chat limits: (max messages, window in seconds)
-CHAT_LIMITS = [(25, 10 * 60), (40, 60 * 60)]
+# Per-user chat limits: (max messages, window in seconds), shortest window first
+CHAT_LIMITS = [(15, 5 * 60), (25, 10 * 60), (40, 60 * 60)]
 # shortcut: kept in memory, so each serverless instance counts separately; move to a DB table if abused
 _chat_log: dict[str, deque] = defaultdict(deque)
 
