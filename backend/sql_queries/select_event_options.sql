@@ -17,4 +17,5 @@ SELECT
 FROM event_options
 -- Only upcoming dated events; recurring Google Places rows carry a stale start_time
 WHERE start_time >= NOW()
-ORDER BY start_time;
+ORDER BY start_time
+LIMIT 100;
