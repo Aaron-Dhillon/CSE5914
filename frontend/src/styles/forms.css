@@ -1,0 +1,39 @@
+@import './events.css';
+
+/* Create event / create group */
+.form-head { margin: 8px 0 20px; }
+.form-head h1 { font-size: 40px; letter-spacing: -0.03em; margin: 0; }
+.form-head p { margin: 6px 0 0; }
+.form-layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; align-items: start; margin-bottom: 72px; }
+.form-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.form-section { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.form-section h2 { font-size: 18px; margin: 0; }
+.form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.input-label { display: block; font-size: 12px; color: var(--color-text-muted); font-weight: 600; margin-bottom: 6px; }
+.pills--wrap { flex-wrap: wrap; overflow: visible; margin-top: 0; }
+
+.form-side { position: sticky; top: 92px; display: flex; flex-direction: column; }
+.dropzone { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; border: 2px dashed rgba(255,255,255,.15); background: var(--color-surface); cursor: pointer; display: grid; place-items: center; outline: none; }
+.dropzone:hover, .dropzone:focus-visible { border-color: rgba(255,255,255,.35); }
+.dropzone.has-photo { border-style: solid; border-color: transparent; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.dropzone img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dropzone-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px; font-size: 13px; }
+.dropzone-empty > span:first-child { font-size: 28px; }
+.dropzone-remove { position: absolute; top: 10px; right: 10px; z-index: 1; font-size: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; border: 0; }
+.preview-title { font-size: 15px; font-weight: 600; margin: 12px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview-meta { font-size: 13px; margin: 3px 0 0; }
+.form-submit { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.form-submit .btn { height: 46px; }
+
+.choice-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choice-card { text-align: left; padding: 16px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; gap: 4px; color: var(--color-text); }
+.choice-card strong { font-size: 15px; }
+.choice-card span { font-size: 13px; color: var(--color-text-muted); }
+.choice-card.on { border-color: var(--color-primary); background: rgba(187,0,0,.15); }
+
+@media (max-width: 900px) {
+  .form-layout { grid-template-columns: 1fr; }
+  .form-side { position: static; }
+  .form-two, .choice-cards { grid-template-columns: 1fr; }
+  .form-head h1 { font-size: 30px; }
+}

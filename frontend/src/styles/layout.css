@@ -48,10 +48,10 @@
 .topnav-left { flex: 1 1 0; }
 .topnav-center { flex: 0 0 auto; display:flex; justify-content:center; }
 .topnav-right { flex: 1 1 0; display:flex; justify-content:flex-end; }
-.brand { display:inline-flex; align-items:center; gap: 10px; text-decoration:none; }
-.brand img { height: 30px; width: auto; }
+.brand { display:inline-flex; align-items:center; gap: 8px; text-decoration:none; }
+.brand img { height: 28px; width: auto; }
 /* stand-in for OSU's licensed Buckeye Sans */
-.brand-text { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: .06em; text-transform: uppercase; line-height: 1; color: var(--color-text); }
+.brand-text { font-family: var(--font-display); font-weight: 800; font-size: 25px; letter-spacing: .01em; text-transform: uppercase; line-height: 1; color: var(--color-text); }
 .brand-text b { color: var(--color-accent-bright); font-weight: 800; }
 .topnav-links { display:flex; gap: 2px; list-style:none; margin:0; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
 .topnav-links a { display:block; color: #a3a3b2; text-decoration:none; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input, Button, Heading, Text, Card, LazyImage } from "../components/ui";
+import { Input, Button, Heading, Text, Card } from "../components/ui";
 import { PageWrapper, MainContent } from "../components/layout";
 import useAuth from "../hooks/useAuth"
 import { useAuthContext } from "../context/AuthContext"
@@ -25,8 +25,6 @@ function Login() {
     }
   }
 
-  const img = '/ohio_outline.png'
-  const imgSrcSet = `${img} 1120w, ${img} 560w`
 
   return (
     <PageWrapper>
@@ -34,31 +32,32 @@ function Login() {
         <div className="welcome-page">
           <div className="welcome-panel">
             <div className="welcome-left" aria-hidden="true">
-              <LazyImage src={img} alt="Ohio outline" className="welcome-image" width={560} height={420} srcSet={imgSrcSet} sizes="(min-width:768px) 50vw, 100vw" />
+              <img src="/campus_crowd.jpg" alt="" className="welcome-photo" />
+              <div className="welcome-caption">
+                <span className="eyebrow">Ohio State · Columbus</span>
+                <p className="welcome-quote">Find your people.<br />Then go do things.</p>
+              </div>
             </div>
 
             <div className="welcome-right">
-              <Card className="login-card centered-card">
-                <Heading level={1}>Login</Heading>
+              <Card className="login-card">
+                <Heading level={1}>Welcome back</Heading>
+                <Text as="p" className="muted">Sign in with your Buckeye email.</Text>
 
                 <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="form-stack">
                   <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                   <Input label="Password" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
                   <Button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Log In"}
+                    {loading ? "Signing in..." : "Sign in"}
                   </Button>
                 </form>
 
-                <div className="text-center mt-2">
-                  <Text as="p" className="mb-1">Don't have an account?</Text>
-                  <Button onClick={() => navigate("/create-account")}>Create Account</Button>
-                </div>
-
                 {error ? <Text as="p" className="error-text">{error}</Text> : null}
-                <div className="text-center mt-2">
-                  <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
-                </div>
+
+                <p className="auth-switch">
+                  New here? <button type="button" className="shelf-link" onClick={() => navigate("/create-account")}>Create an account</button>
+                </p>
               </Card>
             </div>
           </div>

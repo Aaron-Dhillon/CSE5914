@@ -1,38 +1,32 @@
 import { useNavigate } from "react-router-dom";
-import { Button, Heading, Text, LazyImage } from "../components/ui";
+import { Button, Heading, Text } from "../components/ui";
 import { PageWrapper, MainContent } from "../components/layout";
 import '../styles/home.css'
 
 function Home() {
   const navigate = useNavigate();
 
-  const img = '/ohio_outline.png'
-  const imgSrcSet = `${img} 1120w, ${img} 560w, ${img} 320w`
-  const imgSizes = '(min-width: 1024px) 50vw, (min-width: 768px) 50vw, 100vw'
-
   return (
     <PageWrapper>
       <MainContent>
-        <div className="welcome-page">
-          <div className="welcome-panel">
-            <div className="welcome-left" aria-hidden="true">
-              <LazyImage src={img} alt="Ohio outline" className="welcome-image" width={560} height={420} srcSet={imgSrcSet} sizes={imgSizes} />
-            </div>
-
-            <div className="welcome-right">
-              <div className="welcome-message">
-                <Heading level={1}>Welcome to Campus Events</Heading>
-                <Text>Connect with student groups, discover campus activities, and stay involved.</Text>
-
-                <div className="welcome-actions">
-                  <Button onClick={() => navigate('/login')}>Login</Button>
-                  <Text className="muted-note">Don't have an account?</Text>
-                  <Button onClick={() => navigate('/create-account')}>Sign up here</Button>
-                </div>
-              </div>
+        <section className="landing">
+          <img src="/campus_crowd.jpg" alt="" className="landing-photo" />
+          <div className="landing-body">
+            <span className="eyebrow">Ohio State · Columbus</span>
+            <Heading level={1}>Your week at Ohio State, <span className="accent">sorted.</span></Heading>
+            <Text as="p">Concerts, games, shows and student groups near campus, picked for you. Find people to go with.</Text>
+            <div className="landing-actions">
+              <Button onClick={() => navigate('/create-account')}>Create account</Button>
+              <Button variant="ghost" onClick={() => navigate('/login')}>Sign in</Button>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section className="landing-points">
+          <div className="card"><span aria-hidden="true">🎟️</span><h3>Every event nearby</h3><p>Hundreds of upcoming concerts, games and shows, refreshed daily.</p></div>
+          <div className="card"><span aria-hidden="true">✨</span><h3>Picked for you</h3><p>Choose your interests and ask the assistant what to do this week.</p></div>
+          <div className="card"><span aria-hidden="true">👥</span><h3>Go together</h3><p>Join groups and see what the people you follow are going to.</p></div>
+        </section>
       </MainContent>
     </PageWrapper>
   )
