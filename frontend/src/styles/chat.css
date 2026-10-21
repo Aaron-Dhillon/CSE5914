@@ -12,7 +12,6 @@
 .message-user .message-bubble p { color: #fff; }
 
 .chat-compose { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-.chat-attach { font-size: 13px; padding: 8px 12px; }
 .chat-compose-row { display: flex; gap: 10px; }
 .chat-compose-row textarea { flex: 1; resize: none; min-height: 46px; }
 .chat-compose-row .btn { padding: 0 18px; }
