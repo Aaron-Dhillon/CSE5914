@@ -107,7 +107,7 @@
   color: var(--color-text);
   font: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -144,7 +144,7 @@
   color: var(--color-text);
   font: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   position: relative;
 }
 
@@ -197,7 +197,7 @@
   color: var(--color-text);
   font: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .profile-dropdown-option:hover {
@@ -220,7 +220,7 @@
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .profile-range::-webkit-slider-runnable-track {

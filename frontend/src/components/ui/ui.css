@@ -11,7 +11,7 @@
   border: 1px solid transparent;
   background: var(--color-surface);
   color: var(--color-text);
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: background-color 0.12s ease, transform 0.08s ease;
 }
 .btn:active { transform: translateY(1px); }
