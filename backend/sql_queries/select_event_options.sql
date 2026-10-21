@@ -15,7 +15,7 @@ SELECT
     source_url,
     website_url
 FROM event_options
--- Include events with no start_time, future start_time, or recurring events
-WHERE start_time IS NULL OR start_time >= NOW() OR is_recurring = true
-ORDER BY start_time NULLS LAST
+-- Only upcoming dated events; recurring Google Places rows carry a stale start_time
+WHERE start_time >= NOW()
+ORDER BY start_time
 LIMIT 100;

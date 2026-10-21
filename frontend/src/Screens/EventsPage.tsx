@@ -207,7 +207,7 @@ const EventsPage: React.FC = () => {
     return [...preferredOnTop, ...others]
   }
 
-  const { categorySections } = useMemo(() => {
+  const { categorySections, remainingEvents } = useMemo(() => {
     console.info('EventsPage: diagnostics', {
       totalEvents: (events || []).length,
       filteredCount: (filtered || []).length,
@@ -393,71 +393,6 @@ const EventsPage: React.FC = () => {
               ) : null}
 
               <div className="events-content">
-                {user && page === 1 && (
-                  <section style={{ marginBottom: '48px' }}>
-                    <Heading level={2} id="my-events">
-                      My Events
-                    </Heading>
-
-                    <Heading level={3} id="created-events">
-                      Created Events
-                    </Heading>
-                    {!myEventsLoading && myEvents.length === 0 && (
-                      <Text as="p">You haven't created any events yet.</Text>
-                    )}
-                    <EventGrid
-                      events={myEventsPreview}
-                      loading={myEventsLoading}
-                      onEventClick={handleEventClick}
-                    />
-                    {hasMoreMyEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=created')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-
-                    <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>
-                      Joined Events
-                    </Heading>
-                    {!joinedEventsLoading && joinedEvents.length === 0 && (
-                      <Text as="p">You haven't joined any events yet.</Text>
-                    )}
-                    <EventGrid
-                      events={joinedEventsPreview}
-                      loading={joinedEventsLoading}
-                      onEventClick={handleEventClick}
-                    />
-                    {hasMoreJoinedEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=joined')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-
-                    <Heading level={3} id="following-events" style={{ marginTop: 'var(--space-lg)' }}>
-                      From People You Follow
-                    </Heading>
-                    {!followingEventsLoading && followingEvents.length === 0 && (
-                      <Text as="p">No upcoming events from your friends.</Text>
-                    )}
-                    <EventGrid
-                      events={followingEventsPreview}
-                      loading={followingEventsLoading}
-                      onEventClick={handleEventClick}
-                    />
-                    {hasMoreFollowingEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=following')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-                  </section>
-                )}
-
                 {loadingCategories ? <Text as="p">Loading personalized sections...</Text> : null}
 
                 {page === 1 &&
@@ -491,18 +426,97 @@ const EventsPage: React.FC = () => {
                     )
                   })}
 
-                {categorySections.length > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      marginTop: '32px',
-                      marginBottom: '32px',
-                    }}
-                  >
-                    <Button onClick={() => navigate('/events/all')}>View All Events</Button>
-                  </div>
+                {page === 1 && categorySections.length === 0 && (
+                  <section id="upcoming-events" style={{ marginBottom: '48px' }}>
+                    <Heading level={2} style={{ marginBottom: '20px' }}>
+                      Upcoming Events
+                    </Heading>
+                    <EventGrid events={remainingEvents.slice(0, 8)} onEventClick={handleEventClick} />
+                  </section>
                 )}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginTop: '32px',
+                    marginBottom: '32px',
+                  }}
+                >
+                  <Button onClick={() => navigate('/events/all')}>View All Events</Button>
+                </div>
+
+                {user && page === 1 && (
+                  <section style={{ marginBottom: '48px' }}>
+                    <Heading level={2} id="my-events">
+                      My Events
+                    </Heading>
+
+                    <Heading level={3} id="created-events">
+                      Created Events
+                    </Heading>
+                    {!myEventsLoading && myEvents.length === 0 && (
+                      <Text as="p">You haven't created any events yet.</Text>
+                    )}
+                    {(myEventsLoading || myEventsPreview.length > 0) && (
+                      <EventGrid
+                        events={myEventsPreview}
+                        loading={myEventsLoading}
+                        onEventClick={handleEventClick}
+                      />
+                    )}
+                    {hasMoreMyEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=created')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
+
+                    <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>
+                      Joined Events
+                    </Heading>
+                    {!joinedEventsLoading && joinedEvents.length === 0 && (
+                      <Text as="p">You haven't joined any events yet.</Text>
+                    )}
+                    {(joinedEventsLoading || joinedEventsPreview.length > 0) && (
+                      <EventGrid
+                        events={joinedEventsPreview}
+                        loading={joinedEventsLoading}
+                        onEventClick={handleEventClick}
+                      />
+                    )}
+                    {hasMoreJoinedEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=joined')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
+
+                    <Heading level={3} id="following-events" style={{ marginTop: 'var(--space-lg)' }}>
+                      From People You Follow
+                    </Heading>
+                    {!followingEventsLoading && followingEvents.length === 0 && (
+                      <Text as="p">No upcoming events from your friends.</Text>
+                    )}
+                    {(followingEventsLoading || followingEventsPreview.length > 0) && (
+                      <EventGrid
+                        events={followingEventsPreview}
+                        loading={followingEventsLoading}
+                        onEventClick={handleEventClick}
+                      />
+                    )}
+                    {hasMoreFollowingEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=following')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
+                  </section>
+                )}
+
               </div>
             </div>
           </div>
