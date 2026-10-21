@@ -69,3 +69,15 @@ def test_api_refuses_to_start_without_jwt_secret(monkeypatch):
     with pytest.raises(RuntimeError):
         importlib.reload(jh)
     monkeypatch.setenv("JWT_SECRET", os.environ["JWT_SECRET"] or "test-secret-" + "x" * 40)
+
+
+def test_demo_account_has_its_own_chat_limits():
+    import chat
+    for _ in range(20):
+        chat.check_chat_limit(chat.DEMO_USER_ID)
+    with pytest.raises(HTTPException):
+        chat.check_chat_limit(chat.DEMO_USER_ID)
+    for _ in range(15):
+        chat.check_chat_limit("regular-user")
+    with pytest.raises(HTTPException):
+        chat.check_chat_limit("regular-user")
