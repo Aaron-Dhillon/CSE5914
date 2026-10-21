@@ -99,7 +99,7 @@ const AllEventsPage: React.FC = () => {
       if (categoryParam) {
         const raw = (e as any).category
         const mapped = mapCategory(raw)
-        if (String(mapped).toLowerCase() !== String(categoryParam).toLowerCase()) {
+        if (!mapped || mapped !== mapCategory(categoryParam)) {
           return false
         }
       }

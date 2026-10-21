@@ -5,6 +5,7 @@ from openai import OpenAI
 from supabase import create_client, Client
 from datetime import datetime, timezone, timedelta
 import os
+import re
 import json
 from datetime import date
 
@@ -203,8 +204,9 @@ async def get_top_recommendations(user_id: str):
             .eq("user_id", user_id)
             .execute()
         )
+        # "Plays & Dance" -> "plays_dance", the slug event_options.category uses
         preferred_categories = set(
-            r["categories"]["name"].lower()
+            re.sub(r"[^a-z0-9]+", "_", r["categories"]["name"].lower()).strip("_")
             for r in cat_res.data
             if r.get("categories")
         )
@@ -225,7 +227,7 @@ async def get_top_recommendations(user_id: str):
             age = today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day))
             is_under_21 = age < 21
 
-        ALCOHOL_CATEGORIES = {"bar", "night_club", "brewery", "wine_bar", "liquor_store", "pub", "casino"}
+        ALCOHOL_CATEGORIES = {"bar", "night_club", "nightlife_djs", "brewery", "wine_bar", "liquor_store", "pub", "casino"}
 
         size_range_map = {
             "small":  (1,   20),
@@ -236,23 +238,6 @@ async def get_top_recommendations(user_id: str):
         event_size = user_prefs.get("event_size", "mega")
         preferred_size_range = size_range_map.get(event_size, (0, 999999))
         preferred_distance = user_prefs.get("event_distance", 2)
-
-        category_aliases = {
-            "music":      {"music", "night_club", "concert", "live_music"},
-            "food":       {"food", "restaurant", "dining", "cafe", "bar"},
-            "sports":     {"sports", "stadium", "athletic"},
-            "arts":       {"arts", "museum", "theater", "theatre", "art_gallery", "movie_theater"},
-            "social":     {"social", "networking", "meetup", "party", "bowling_alley", "amusement_park"},
-            "technology": {"technology", "tech", "hackathon", "coding"},
-            "outdoors":   {"outdoors", "park", "nature", "hiking", "campground", "national_park", "state_park"},
-        }
-
-        def get_category_group(db_category: str) -> str | None:
-            db_cat_lower = db_category.lower()
-            for pref_cat, aliases in category_aliases.items():
-                if db_cat_lower in aliases or db_cat_lower == pref_cat:
-                    return pref_cat
-            return None
 
         options_res = (
             supabase.table("event_options")
@@ -288,11 +273,7 @@ async def get_top_recommendations(user_id: str):
                 if opt_category == "other":
                     score += 0
                 else:
-                    category_group = get_category_group(opt_category)
-                    category_matched = (
-                        category_group in preferred_categories
-                        or opt_category in preferred_categories
-                    )
+                    category_matched = opt_category in preferred_categories
                     if category_matched:
                         score += 1000
                         if opt_source in PREFERRED_SOURCES:
@@ -396,12 +377,7 @@ async def get_top_recommendations(user_id: str):
             uncategorized = []
 
             for event in scored_options:
-                event_cat_group = get_category_group(event["category"]) or event["category"]
-                matched_pref = None
-                if event_cat_group in preferred_categories:
-                    matched_pref = event_cat_group
-                elif event["category"] in preferred_categories:
-                    matched_pref = event["category"]
+                matched_pref = event["category"] if event["category"] in preferred_categories else None
 
                 if matched_pref and len(category_buckets[matched_pref]) < 3:
                     category_buckets[matched_pref].append(event)

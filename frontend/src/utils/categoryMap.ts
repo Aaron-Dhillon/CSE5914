@@ -1,45 +1,9 @@
-// Map raw event_options.category values to the 12 canonical user preference categories
-// Canonical categories: sports, music, tech, arts, outdoors, academic, social, career, volunteering, gaming, food, fitness
-
+// Canonical categories = categories table names, slugified (see backend/utils/ticketMaster.py map_category)
 export const CANONICAL_CATEGORIES = [
-  'sports', 'music', 'tech', 'arts', 'outdoors', 'academic', 'social', 'career', 'volunteering', 'gaming', 'food', 'fitness'
+  'concerts', 'nightlife_djs', 'sports', 'musicals', 'plays_dance', 'comedy_shows', 'family_holiday', 'other'
 ]
 
-const rawToCanonical: Record<string, string> = {
-  // arts-related
-  museums: 'arts',
-  museum: 'arts',
-  art_gallery: 'arts',
-  gallery: 'arts',
-  cinema: 'arts',
-  movie_theater: 'arts',
-  movie_theatre: 'arts',
-
-  // outdoors/fitness/sports
-  park: 'outdoors',
-  stadium: 'sports',
-  sports_stadium: 'sports',
-  fitness_center: 'fitness',
-  gym: 'fitness',
-
-  // social / nightlife
-  bar: 'social',
-  pub: 'social',
-  night_club: 'music',
-  nightclub: 'music',
-  bowling_alley: 'social',
-  amusement_park: 'social',
-
-  // food
-  restaurant: 'food',
-  restraunt: 'food',
-  cafe: 'food',
-  coffee_shop: 'food',
-
-  // other
-  museum_shop: 'arts',
-  other: 'social',
-}
+const rawToCanonical: Record<string, string> = {}
 
 export function mapCategory(raw?: string | null): string | null {
   if (!raw) return null
