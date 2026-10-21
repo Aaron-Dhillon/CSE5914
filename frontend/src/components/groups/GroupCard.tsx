@@ -1,5 +1,5 @@
 import React from 'react'
-import { AnimatedCard, Heading, Text, Button } from '../ui'
+import { AnimatedCard } from '../ui'
 import LazyImage from '../ui/LazyImage'
 import '../../styles/groups.css'
 
@@ -16,30 +16,65 @@ export type GroupItem = {
 type Props = {
   group: GroupItem
   onView?: (id: string) => void
+  compact?: boolean
 }
 
-const GroupCard: React.FC<Props> = ({ group, onView }) => {
+const COVERS = [
+  'linear-gradient(135deg,#BB0000,#f97316)',
+  'linear-gradient(135deg,#1e3a8a,#0ea5e9)',
+  'linear-gradient(135deg,#4c1d95,#BB0000)',
+  'linear-gradient(135deg,#065f46,#22c55e)',
+  'linear-gradient(135deg,#831843,#a855f7)',
+  'linear-gradient(135deg,#0f172a,#2563eb)',
+]
+
+// Stable gradient per group so covers don't change between renders
+export function groupCover(id: string) {
+  let h = 0
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0
+  return COVERS[Math.abs(h) % COVERS.length]
+}
+
+const GroupCard: React.FC<Props> = ({ group, onView, compact = false }) => {
   const { id, name, members, description, thumbnail, join_policy } = group
-  const thumb = thumbnail || '/block.jpg'
-  const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
-  const thumbSizes = '(max-width: 420px) 100vw, 320px'
+  const open = () => onView?.(id)
+  const policy = join_policy === 'approval' ? 'Approval needed' : 'Open'
+  const cover = thumbnail
+    ? <LazyImage src={thumbnail} alt="" width={640} height={320} />
+    : <span className="group-initial" aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>
+
+  if (compact) {
+    return (
+      <div className="card group-row" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => { if (e.key === 'Enter') open() }}>
+        <div className="group-row-icon" style={{ background: groupCover(id) }}>{cover}</div>
+        <div>
+          <h3>{name}</h3>
+          <p>{members} {members === 1 ? 'member' : 'members'} · {policy}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <AnimatedCard className={`event-card group-card`} aria-labelledby={`group-title-${id}`}>
-      <div className="event-card-media">
-        <LazyImage src={thumb} alt={`${name} thumbnail`} width={320} height={180} className="event-card-thumb" srcSet={thumbSrcSet} sizes={thumbSizes} />
+    <AnimatedCard
+      lift={false}
+      className="card group-card"
+      role="link"
+      tabIndex={0}
+      aria-labelledby={`group-title-${id}`}
+      onClick={open}
+      onKeyDown={(e) => { if (e.key === 'Enter') open() }}
+    >
+      <div className="group-cover" style={{ background: groupCover(id) }}>
+        {cover}
+        <span className="group-policy">{policy}</span>
       </div>
-
-      <div className="event-card-body">
-        <div className="event-card-header">
-          <Heading level={3} id={`group-title-${id}`}>{name}</Heading>
-          <Text as="p" className="event-meta">{members} members{join_policy ? ` · ${join_policy === 'open' ? 'Open' : 'Approval required'}` : ''}</Text>
-        </div>
-
-        {description ? <Text as="div" className="event-desc">{description}</Text> : null}
-
-        <div className="event-actions">
-          <Button onClick={() => onView?.(id)}>View Group</Button>
+      <div className="group-body">
+        <h3 id={`group-title-${id}`}>{name}</h3>
+        {description ? <p className="group-desc">{description}</p> : null}
+        <div className="group-foot">
+          <span>{members} {members === 1 ? 'member' : 'members'}</span>
+          <span className={`group-cta ${join_policy === 'approval' ? 'group-cta--req' : ''}`}>{join_policy === 'approval' ? 'Request' : 'Join'}</span>
         </div>
       </div>
     </AnimatedCard>

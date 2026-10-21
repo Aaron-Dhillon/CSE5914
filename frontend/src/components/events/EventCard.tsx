@@ -1,5 +1,5 @@
 import React from 'react'
-import { AnimatedCard, Heading, Text, Button } from '../ui'
+import { AnimatedCard } from '../ui'
 import LazyImage from '../ui/LazyImage'
 import '../../styles/events.css'
 import type { EventItem } from '../../services/events'
@@ -10,31 +10,30 @@ type Props = {
   className?: string
 }
 
+export function formatEventDate(date?: string) {
+  if (!date) return 'TBA'
+  return new Date(date).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
 const EventCard: React.FC<Props> = ({ event, onView, className = '' }) => {
-  const { id, title, date, location, description, thumbnail } = event
-  const displayDate = date ? new Date(date).toLocaleString() : 'TBA'
+  const { id, title, date, location, thumbnail } = event
   const thumb = thumbnail || '/block.jpg'
-  const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
-  const thumbSizes = '(max-width: 420px) 100vw, 320px'
 
   return (
-    <AnimatedCard className={`event-card ${className}`.trim()} aria-labelledby={`event-title-${id}`}>
-      <div className="event-card-media">
-        <LazyImage src={thumb} alt={`${title} thumbnail`} width={320} height={180} className="event-card-thumb" srcSet={thumbSrcSet} sizes={thumbSizes} />
+    <AnimatedCard
+      lift={false}
+      className={`event-tile ${className}`.trim()}
+      role="link"
+      tabIndex={0}
+      aria-labelledby={`event-title-${id}`}
+      onClick={() => onView?.(id)}
+      onKeyDown={(e) => { if (e.key === 'Enter') onView?.(id) }}
+    >
+      <div className="event-tile-art">
+        <LazyImage src={thumb} alt="" width={640} height={360} />
       </div>
-
-      <div className="event-card-body">
-        <div className="event-card-header">
-          <Heading level={3} id={`event-title-${id}`}>{title}</Heading>
-          <Text as="p" className="event-meta">{displayDate}{location ? ` · ${location}` : ''}</Text>
-        </div>
-
-        {description ? <Text as="div" className="event-desc">{description}</Text> : null}
-
-        <div className="event-actions">
-          <Button onClick={() => onView?.(id)}>View Event</Button>
-        </div>
-      </div>
+      <h3 id={`event-title-${id}`} className="event-tile-title">{title}</h3>
+      <p className="event-tile-meta">{formatEventDate(date)}{location ? ` · ${location}` : ''}</p>
     </AnimatedCard>
   )
 }

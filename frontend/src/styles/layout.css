@@ -43,14 +43,21 @@
 .page-grid { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-4); }
 
 /* TopNav styles */
-.topnav-wrapper { background: var(--color-bg); border-bottom: 1px solid var(--color-border); position: relative; z-index: 20; }
-.topnav { display:flex; align-items:center; gap: var(--space-md); padding: var(--space-sm) 0; }
-.topnav-left { flex: 0 0 auto; }
-.topnav-center { flex: 1 1 auto; display:flex; justify-content:center; }
-.topnav-right { flex: 0 0 auto; }
-.topnav-links { display:flex; gap: var(--space-md); list-style:none; margin:0; padding:0; }
-.topnav-links a { color: var(--color-text); text-decoration:none; padding: calc(var(--space-xs) + 2px) var(--space-sm); border-radius: var(--radius-sm); }
-.topnav-links a:hover { background: var(--color-surface); }
+.topnav-wrapper { position: sticky; top: 0; z-index: 20; background: rgba(11,13,18,0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.topnav { display:flex; align-items:center; gap: var(--space-md); height: 72px; }
+.topnav-left { flex: 1 1 0; }
+.topnav-center { flex: 0 0 auto; display:flex; justify-content:center; }
+.topnav-right { flex: 1 1 0; display:flex; justify-content:flex-end; }
+.brand { display:inline-flex; align-items:center; gap: 10px; text-decoration:none; }
+.brand img { height: 30px; width: auto; }
+/* stand-in for OSU's licensed Buckeye Sans */
+.brand-text { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: .06em; text-transform: uppercase; line-height: 1; color: var(--color-text); }
+.brand-text b { color: var(--color-accent-bright); font-weight: 800; }
+.topnav-links { display:flex; gap: 2px; list-style:none; margin:0; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+.topnav-links a { display:block; color: #a3a3b2; text-decoration:none; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; }
+.topnav-links a:hover { color: var(--color-text); }
+.topnav-links a.active { background: #fff; color: #0b0d12; }
+.topnav-auth { border-radius: 999px; padding: 8px 16px; font-weight: 500; }
 
 /* Disabled state for landing page nav links */
 .topnav-links a.disabled {
@@ -64,7 +71,7 @@
 .mobile-nav-link.disabled { color: #4b5563; pointer-events: none; cursor: default; opacity: 0.9 }
 
 /* Mobile nav styles */
-.mobile-nav { position: fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; background: var(--color-bg); border-top:1px solid var(--color-border); padding: var(--space-xs) 0; z-index: 60; }
+.mobile-nav { position: fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; background: rgba(11,13,18,0.85); backdrop-filter: blur(16px); border-top:1px solid var(--color-border); padding: var(--space-xs) 0; z-index: 60; }
 .mobile-nav-link { color: var(--color-text); text-decoration:none; font-size:var(--font-size-sm); padding: var(--space-xs); }
 
 @media (min-width: 768px) {
