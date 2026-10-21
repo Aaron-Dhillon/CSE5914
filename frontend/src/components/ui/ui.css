@@ -5,7 +5,9 @@
   justify-content: center;
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
   border: 1px solid transparent;
   background: var(--color-surface);
   color: var(--color-text);
@@ -30,34 +32,36 @@
 .btn--danger:hover { background: #8d0016; }
 .btn--ghost {
   background: transparent;
-  border-color: var(--color-border);
+  border-color: rgba(255,255,255,0.15);
   color: var(--color-text);
 }
+.btn--ghost:hover { background: rgba(255,255,255,0.06); }
+.btn--white { background: #fff; color: #0b0d12; }
+.btn--white:hover { background: #e8e8ee; }
 
 .card {
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   padding: var(--space-md);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  backdrop-filter: var(--glass-blur);
 }
 
 .card--elevated {
-  box-shadow: var(--shadow-md);
-  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
 .input {
   display: block;
   width: 100%;
   padding: calc(var(--space-sm));
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.3);
   color: var(--color-text);
 }
 .input::placeholder { color: var(--color-text-muted); }
-.input:focus { outline: none; box-shadow: 0 0 0 4px rgba(187,0,0,0.06); border-color: var(--color-primary); }
+.input:focus { outline: none; box-shadow: 0 0 0 4px rgba(187,0,0,0.2); border-color: var(--color-primary); }
 .input:read-only,
 .input:disabled {
   color: var(--color-text-muted);
@@ -68,7 +72,7 @@
 select.input {
   appearance: none;
   -webkit-appearance: none;
-  background-color: var(--color-bg);
+  background-color: rgba(0,0,0,0.3);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
     linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);

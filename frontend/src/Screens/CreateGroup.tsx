@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { Card, Heading, Input, Button, Text } from '../components/ui'
+import { Input, Button, Text } from '../components/ui'
+import '../styles/forms.css'
 import * as groupsService from '../services/groups'
 import { supabase } from '../services/supabase'
 
@@ -86,80 +87,94 @@ const CreateGroup: React.FC = () => {
     }
   }
 
+  const clearPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const policies = [
+    { value: 'open', title: 'Open', desc: 'Anyone can join right away.' },
+    { value: 'approval', title: 'Approval required', desc: 'You approve each request.' },
+  ]
+
   return (
     <PageWrapper>
       <MainContent>
-        <Heading level={1}>Create Group</Heading>
+        <button type="button" className="back-link" onClick={() => navigate(-1)}>‹ Back</button>
+        <div className="form-head">
+          <h1>Create a group</h1>
+          <p className="muted">Bring people together around the things you like doing.</p>
+        </div>
 
-        <Card className="card section-card mt-2">
-          <div className="form-stack">
-            <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Group Name" />
-
-            <div>
-              <label className="input-label" htmlFor="description">Description</label>
-              <textarea id="description" className="input" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this group about?" />
-            </div>
-
-            <div>
-              <label className="input-label" htmlFor="join-policy">Join Policy</label>
-              <select id="join-policy" className="input" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
-                <option value="open">Open — anyone can join</option>
-                <option value="approval">Approval Required</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="input-label">Group Photo (optional)</label>
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                style={{
-                  border: '2px dashed var(--color-border, #ccc)',
-                  borderRadius: 'var(--radius-md, 8px)',
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  background: 'var(--color-surface, #fafafa)',
-                }}
-              >
-                {photoPreview ? (
-                  <div>
-                    <img src={photoPreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }} />
-                    <p style={{ marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>{photoFile?.name}</p>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
-                      style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--color-danger, red)', cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ color: 'var(--color-text-muted)' }}>
-                    <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Click or drag & drop an image here</p>
-                    <p style={{ fontSize: '0.875rem' }}>PNG, JPG, WEBP up to 5MB</p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                />
+        <div className="form-layout">
+          <div className="form-main">
+            <section className="card form-section">
+              <h2>About the group</h2>
+              <Input label="Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Buckeye Concert Crew" />
+              <div>
+                <label className="input-label" htmlFor="description">Description</label>
+                <textarea id="description" className="input" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this group about?" />
               </div>
-            </div>
+            </section>
 
-            <div className="section-actions">
-              <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
-              <Button onClick={handleCreate} disabled={loading}>{loading ? 'Creating...' : 'Create Group'}</Button>
-            </div>
-
-            {error ? <Text as="p" className="status-error">{error}</Text> : null}
-            {message ? <Text as="p" className="status-active">{message}</Text> : null}
+            <section className="card form-section">
+              <h2>Who can join?</h2>
+              <div className="choice-cards" role="radiogroup" aria-label="Join policy">
+                {policies.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={joinPolicy === p.value}
+                    className={joinPolicy === p.value ? 'choice-card on' : 'choice-card'}
+                    onClick={() => setJoinPolicy(p.value)}
+                  >
+                    <strong>{p.title}</strong>
+                    <span>{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
-        </Card>
+
+          <aside className="form-side">
+            <span className="input-label">Group photo</span>
+            <div
+              className={`dropzone ${photoPreview ? 'has-photo' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter') fileInputRef.current?.click() }}
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+            >
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Group photo preview" />
+                  <button type="button" className="dropzone-remove" onClick={clearPhoto}>Remove</button>
+                </>
+              ) : (
+                <div className="dropzone-empty">
+                  <span aria-hidden="true">🖼️</span>
+                  <strong>Add a group photo</strong>
+                  <span className="muted">Click or drop an image · PNG, JPG, WEBP up to 5MB</span>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+            </div>
+            <p className="preview-title" style={{ textTransform: 'capitalize' }}>{name.trim() || 'Your group name'}</p>
+            <p className="muted preview-meta">{joinPolicy === 'open' ? 'Open group' : 'Approval required'}</p>
+
+            <div className="form-submit">
+              <Button onClick={handleCreate} disabled={loading}>{loading ? 'Creating...' : 'Create group'}</Button>
+              <Button variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
+            </div>
+            {error ? <Text as="p" className="error-text">{error}</Text> : null}
+            {message ? <Text as="p" className="status-active">{message}</Text> : null}
+          </aside>
+        </div>
       </MainContent>
     </PageWrapper>
   )

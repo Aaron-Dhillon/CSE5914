@@ -4,6 +4,7 @@ import { verifyToken } from "../services/auth";
 import { PageWrapper, MainContent } from "../components/layout"
 import { Heading, Text, Button } from "../components/ui"
 import { useAuthContext } from "../context/AuthContext"
+import "../styles/home.css"
 
 const Verify: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -41,12 +42,13 @@ const Verify: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-        <div className="text-center mt-2">
-          <Heading level={1}>Verification Status</Heading>
+        <div className="card verify-card">
+          <span style={{ fontSize: 32 }} aria-hidden="true">{verified ? '✅' : '✉️'}</span>
+          <Heading level={1}>Email verification</Heading>
           <Text as="p">{status}</Text>
           {verified && (
             <Button onClick={() => navigate("/profile")} className="mt-2">
-              Continue
+              Set up your profile
             </Button>
           )}
         </div>

@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { GroupGrid, GroupFilters, GroupHero } from '../components/groups'
-import { Heading, Button, Text } from '../components/ui'
+import { GroupGrid, GroupFilters } from '../components/groups'
+import { Button, Text } from '../components/ui'
 import { useAuthContext } from '../context/AuthContext'
 import * as groupsService from '../services/groups'
 import useGroups from '../hooks/useGroups'
 import type { GroupItem } from '../components/groups/GroupCard'
-import '../styles/events.css'
+import '../styles/groups.css'
 
 const PAGE_SIZE = 10
 
@@ -73,44 +73,44 @@ const GroupsPage: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-        <div className="stack-vertical">
-          <GroupHero image="/union.jpg" />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Heading level={1}>Looking for groups</Heading>
-            <div>
-              <Button onClick={() => navigate('/groups/create')}>Create Group</Button>
-            </div>
+        <div className="page-head">
+          <div>
+            <h1>Groups</h1>
+            <p>Find your people, then go to things together.</p>
           </div>
+          <Button onClick={() => navigate('/groups/create')}>＋ Create group</Button>
+        </div>
 
-          <GroupFilters
-            search={search}
-            setSearch={(s) => { setSearch(s); setPage(1) }}
-            location={location}
-            setLocation={(l) => { setLocation(l); setPage(1) }}
-            locations={locations}
-          />
+        <GroupFilters
+          search={search}
+          setSearch={(s) => { setSearch(s); setPage(1) }}
+          location={location}
+          setLocation={(l) => { setLocation(l); setPage(1) }}
+          locations={locations}
+        />
 
-          {user && (
-            <section>
-              <Heading level={2}>My Groups</Heading>
-              {myGroupsLoading ? (
-                <GroupGrid groups={[]} loading={true} onGroupClick={handleGroupClick} />
-              ) : myGroups.length === 0 ? (
-                <Text as="p">You haven't joined any groups yet.</Text>
-              ) : (
-                <GroupGrid groups={myGroups} onGroupClick={handleGroupClick} />
-              )}
-            </section>
-          )}
+        {user && (
+          <section className="shelf">
+            <div className="shelf-h"><h2>My groups</h2></div>
+            {myGroupsLoading ? (
+              <GroupGrid groups={[]} loading={true} onGroupClick={handleGroupClick} />
+            ) : myGroups.length === 0 ? (
+              <Text as="p" className="muted">You haven't joined any groups yet.</Text>
+            ) : (
+              <GroupGrid groups={myGroups} compact onGroupClick={handleGroupClick} />
+            )}
+          </section>
+        )}
 
-          <Heading level={2} style={{ marginTop: 'var(--space-xl)' }}>All Groups</Heading>
+        <section className="shelf">
+          <div className="shelf-h"><h2>All groups</h2></div>
           <GroupGrid groups={paginated} loading={loading} onGroupClick={handleGroupClick} />
+        </section>
 
-          <div className="flex-center pagination" style={{ marginTop: 'var(--space-xl)' }}>
-            <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-            <div>Page {page} of {totalPages}</div>
-            <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-          </div>
+        <div className="pager">
+          <Button variant="ghost" aria-label="Previous page" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹</Button>
+          <span>Page {page} of {totalPages}</span>
+          <Button variant="ghost" aria-label="Next page" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>›</Button>
         </div>
       </MainContent>
     </PageWrapper>

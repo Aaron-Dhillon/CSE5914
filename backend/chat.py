@@ -244,9 +244,10 @@ async def get_top_recommendations(user_id: str):
             .select(
                 "id, title, description, category, location_name, "
                 "start_time, is_free, walkable, distance_from_campus, "
-                "popularity_score, google_rating, google_review_count, is_recurring, source"
+                "popularity_score, google_rating, google_review_count, is_recurring, source, image_url"
             )
-            .or_("start_time.gte." + now_query + ",is_recurring.eq.true")
+            # Only upcoming dated events, same as the Events page (recurring Google rows are stale)
+            .gte("start_time", now_query)
             .order("start_time", nullsfirst=False)
             .limit(300)
             .execute()
@@ -363,6 +364,7 @@ async def get_top_recommendations(user_id: str):
                 "location": opt.get("location_name", "TBD"),
                 "start_time": start_display,
                 "is_free": opt.get("is_free", True),
+                "image_url": opt.get("image_url"),
                 "score": score,
                 "category": opt_category,
             })

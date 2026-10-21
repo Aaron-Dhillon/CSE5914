@@ -23,8 +23,9 @@ const TopNav: React.FC = () => {
       <Container>
         <nav className="topnav" aria-label="Main navigation">
           <div className="topnav-left">
-            <NavLink to="/" className="brand">
-              <LazyImage src="/university_logo.png" alt="Ohio State" width={240} height={40} />
+            <NavLink to="/" className="brand" aria-label="GroupGetter home">
+              <LazyImage src="/block_o.png" alt="" width={23} height={30} />
+              <span className="brand-text">Group<b>Getter</b></span>
             </NavLink>
           </div>
 
@@ -67,7 +68,7 @@ const TopNav: React.FC = () => {
           </div>
 
           <div className="topnav-right">
-            <Button variant={isAuthenticated ? 'danger' : 'primary'} onClick={handleAuthClick}>
+            <Button variant={isAuthenticated ? 'ghost' : 'primary'} className="topnav-auth" onClick={handleAuthClick}>
               {isAuthenticated ? 'Sign out' : 'Sign in'}
             </Button>
           </div>

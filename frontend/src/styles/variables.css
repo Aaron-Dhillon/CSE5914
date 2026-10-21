@@ -61,11 +61,18 @@
   --font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root{
-    --color-bg: #0b1220;
-    --color-surface: #1e2e47;
-    --color-text: #e6eef6;
-    --color-text-muted: #9aa6b2;
-  }
+/* Midnight theme: always dark */
+:root{
+  --color-bg: #0b0d12;
+  --color-surface: rgba(255,255,255,0.04);
+  --color-surface-solid: #14161c;
+  --color-border: rgba(255,255,255,0.08);
+  --color-text: #e8e8ee;
+  --color-text-muted: #9a9aab;
+  --color-accent-bright: #ff3b3b;
+  --color-link: #ff6b6b;
+  --glass-blur: blur(10px);
+  --radius-lg: 20px;
+  --font-display: "Barlow Condensed", Inter, sans-serif;
+  color-scheme: dark;
 }

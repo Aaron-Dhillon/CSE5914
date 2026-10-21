@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Card, Heading, Text, LazyImage } from "../components/ui";
+import { Button, Text, LazyImage } from "../components/ui";
 import ReactMarkdown from 'react-markdown';
 import '../styles/dashboard.css'
 import '../styles/chat.css'
@@ -9,6 +9,8 @@ import useEvents from '../hooks/useEvents'
 import { request } from '../services/api'
 import { featuredGroups as fetchFeaturedGroupsApi } from '../services/groups'
 import { useAuthContext } from '../context/AuthContext'
+import { getProfile } from '../services/auth'
+import { CATEGORY_LABELS } from '../utils/categoryMap'
 
 interface RecommendedEvent {
   id: string;
@@ -17,6 +19,8 @@ interface RecommendedEvent {
   location: string;
   start_time: string;
   is_free: boolean;
+  image_url?: string | null;
+  category?: string;
 }
 
 interface FeaturedGroup {
@@ -51,12 +55,20 @@ const Dashboard: React.FC = () => {
 
   // Chat state (inlined from Chat.tsx)
   const [messages, setMessages] = useState<Message[]>([
-    { id: 'm1', role: 'assistant', text: 'Hi — I can help explain or recommend events. Ask me anything about your suggested events.' },
+    { id: 'm1', role: 'assistant', text: 'Ask me for ideas, or pick an event below and I can explain, compare or suggest similar ones.' },
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<string | ''>('')
   const listRef = useRef<HTMLDivElement | null>(null)
+  const [firstName, setFirstName] = useState('')
+
+  useEffect(() => {
+    if (!user?.user_id) return
+    getProfile(user.user_id)
+      .then((p) => setFirstName((p?.display_name || '').trim().split(/\s+/)[0] || ''))
+      .catch(() => setFirstName(''))
+  }, [user])
 
   // Fetch featured events
   const fetchFeaturedEvents = async () => {
@@ -134,166 +146,130 @@ const Dashboard: React.FC = () => {
     }
   }
 
+  const quickPrompts = [
+    { icon: '💡', text: 'Why should I go to this event?' },
+    { icon: '⚖️', text: 'How does it compare to other events?' },
+    { icon: '👥', text: 'Who is this event best for?' },
+  ]
+
   return (
     <PageWrapper>
       <MainContent>
-          {/* Chat (replaces hero section) */}
-          <section className="dashboard-hero">
-            <div className="chat-page">
-              <div className="chat-header">
-                <Heading level={1}>Event Assistant</Heading>
-                <Text>Ask the assistant about recommended events, get explanations and suggestions.</Text>
+        <section className="home-hero">
+          <div className="home-glow" aria-hidden="true" />
+          <div className="home-hero-grid">
+            <div className="card assistant">
+              <div className="bot-row">
+                <div className="bot-avatar" aria-hidden="true">✨</div>
+                <span className="muted">GroupGetter Assistant</span>
+              </div>
+              <h1 className="ask-big">
+                What are you doing this week{firstName ? <>, <span className="name">{firstName}</span></> : null}?
+              </h1>
+
+              <div className="chat-messages" ref={listRef} aria-live="polite">
+                {messages.map((m) => (
+                  <div key={m.id} className={`message ${m.role === 'user' ? 'message-user' : 'message-ai'}`}>
+                    <div className="message-bubble" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                      <ReactMarkdown>{m.text}</ReactMarkdown>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="chat-layout">
-                <div className="chat-main">
-                  <div className="chat-messages" ref={listRef} aria-live="polite">
-                    {messages.map((m) => (
-                      <div key={m.id} className={`message ${m.role === 'user' ? 'message-user' : 'message-ai'}`}>
-                        <div
-                          className="message-bubble"
-                          style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}
-                        >
-                          <ReactMarkdown>{m.text}</ReactMarkdown>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="chat-input">
-                    <div className="chat-controls">
-                      <select value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)} className="input">
-                        <option value="">No event attached</option>
-                        {suggestedEvents.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="chat-compose">
-                      <textarea
-                        placeholder="Ask about this event or your suggestions..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            sendMessage();
-                          }
-                        }}
-                      />
-                      <div className="chat-actions">
-                        <Button onClick={sendMessage} disabled={loading || !input.trim()}>{loading ? 'Sending…' : 'Send'}</Button>
-                      </div>
-                    </div>
-                  </div>
+              <div className="chat-compose">
+                <select value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)} className="input chat-attach" aria-label="Attach an event">
+                  <option value="">No event attached</option>
+                  {suggestedEvents.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+                </select>
+                <div className="chat-compose-row">
+                  <textarea
+                    className="input"
+                    placeholder="Ask about an event or your picks…"
+                    value={input}
+                    rows={1}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  <Button onClick={sendMessage} disabled={loading || !input.trim()}>{loading ? 'Sending…' : 'Send'}</Button>
                 </div>
-
-                <aside className="chat-side">
-                  <div className="chat-side-card">
-                    <Heading level={3}>How to use</Heading>
-                    <Text>Pick an event to attach context, then ask for explanations, suggestions, or comparisons.</Text>
-                    <Heading level={4}>Quick prompts</Heading>
-                    <ul>
-                      <li>Explain why I should attend this event</li>
-                      <li>How does this compare to other events?</li>
-                      <li>Who is this event best for?</li>
-                    </ul>
-                  </div>
-                  <div className="brutus-wrap" aria-hidden="true">
-                    <LazyImage src="/brutus.png" alt="Brutus" width={120} height={120} className="brutus-img" />
-                  </div>
-                </aside>
               </div>
             </div>
-          </section>
 
-          {/* Featured Section */}
-          <section className="dashboard-feature-grid">
-            <Card className="card section-card" style={{ gridColumn: '1 / -1' }}>
-              <Heading level={2} style={{ marginBottom: '24px' }}>Featured Events Just For You</Heading>
+            <aside className="card try-asking">
+              <h3>Try asking</h3>
+              {quickPrompts.map((p) => (
+                <button key={p.text} type="button" className="prompt" onClick={() => setInput(p.text)}>
+                  <span aria-hidden="true">{p.icon}</span> {p.text}
+                </button>
+              ))}
+              <LazyImage src="/brutus.png" alt="" width={120} height={120} className="brutus-img" />
+            </aside>
+          </div>
+        </section>
 
-              {featuredEvents.length === 0 && !featuredLoading ? (
-                <Text as="p" style={{ color: '#666' }}>No recommendations available yet.</Text>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-                  {featuredEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      style={{
-                        padding: '16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'box-shadow 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                      onClick={() => navigate(`/events/${event.id}`)}
-                    >
-                      <Heading level={3} style={{ marginBottom: '8px', fontSize: '1.1em' }}>{event.title}</Heading>
-                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
-                        {event.start_time}
-                      </Text>
-                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
-                        📍 {event.location}
-                      </Text>
-                      <Text as="p" style={{ color: '#666', marginBottom: '12px', fontSize: '0.85em' }}>
-                        {event.description?.substring(0, 80)}...
-                      </Text>
-                      <Text as="p" style={{ 
-                        fontWeight: 'bold', 
-                        color: event.is_free ? '#4caf50' : '#ff9800',
-                        fontSize: '0.9em'
-                      }}>
-                        {event.is_free ? "Free" : "Paid"}
-                      </Text>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
+        <section className="shelf">
+          <div className="shelf-h">
+            <h2>Featured for you</h2>
+            <button type="button" className="shelf-link" onClick={() => navigate('/events')}>See all ›</button>
+          </div>
+          {featuredEvents.length === 0 && !featuredLoading ? (
+            <Text as="p" className="muted">No recommendations yet. Pick some interests on your Profile.</Text>
+          ) : (
+            <div className="poster-grid">
+              {featuredEvents.map((event) => (
+                <article
+                  key={event.id}
+                  className="poster"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/events/${event.id}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/events/${event.id}`) }}
+                >
+                  <img src={event.image_url || '/block.jpg'} alt="" loading="lazy" />
+                  <div className="poster-body">
+                    {event.category && CATEGORY_LABELS[event.category] ? <span className="poster-tag">{CATEGORY_LABELS[event.category]}</span> : null}
+                    <h3>{event.title}</h3>
+                    <p>{event.start_time} · {event.location}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-            <Card className="card section-card" style={{ gridColumn: '1 / -1' }}>
-              <Heading level={2} style={{ marginBottom: '24px' }}>Featured Groups</Heading>
-
-              {featuredGroups.length === 0 && !featuredGroupsLoading ? (
-                <Text as="p" style={{ color: '#666' }}>No groups available yet.</Text>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-                  {featuredGroups.map((group) => (
-                    <div
-                      key={group.id}
-                      style={{
-                        padding: '16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'box-shadow 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                      onClick={() => navigate(`/groups/${group.id}`)}
-                    >
-                      <Heading level={3} style={{ marginBottom: '8px', fontSize: '1.1em' }}>{group.name}</Heading>
-                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
-                        👥 {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-                      </Text>
-                      <Text as="p" style={{ color: '#666', marginBottom: '12px', fontSize: '0.85em' }}>
-                        {(group.description || 'No description.').substring(0, 80)}{(group.description?.length ?? 0) > 80 ? '…' : ''}
-                      </Text>
-                      <Text as="p" style={{
-                        fontWeight: 'bold',
-                        color: group.join_policy === 'open' ? '#4caf50' : '#ff9800',
-                        fontSize: '0.9em'
-                      }}>
-                        {group.join_policy === 'open' ? 'Open to join' : 'Request to join'}
-                      </Text>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </section>
-        </MainContent>
+        <section className="shelf" style={{ marginBottom: 72 }}>
+          <div className="shelf-h">
+            <h2>Featured groups</h2>
+            <button type="button" className="shelf-link" onClick={() => navigate('/groups')}>Browse ›</button>
+          </div>
+          {featuredGroups.length === 0 && !featuredGroupsLoading ? (
+            <Text as="p" className="muted">No groups available yet.</Text>
+          ) : (
+            <div className="group-strip">
+              {featuredGroups.map((group) => (
+                <article
+                  key={group.id}
+                  className="card group-chip"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/groups/${group.id}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/groups/${group.id}`) }}
+                >
+                  <h3>{group.name}</h3>
+                  <p>{group.member_count} {group.member_count === 1 ? 'member' : 'members'} · {group.join_policy === 'open' ? 'Open' : 'Approval needed'}</p>
+                  {group.description ? <p className="group-chip-desc">{group.description}</p> : null}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </MainContent>
     </PageWrapper>
   );
 };

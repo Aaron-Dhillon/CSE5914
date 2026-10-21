@@ -9,14 +9,18 @@ type Props = {
   onEventClick?: (id: string) => void
   className?: string
   loading?: boolean
+  /** 'row' = one horizontally scrolling shelf */
+  layout?: 'grid' | 'row'
 }
 
-const EventGrid: React.FC<Props> = ({ events, onEventClick, className = '', loading = false }) => {
+const EventGrid: React.FC<Props> = ({ events, onEventClick, className = '', loading = false, layout = 'grid' }) => {
+  const base = layout === 'row' ? 'events-row' : 'events-grid'
+
   if (loading) {
     // show a grid of skeletons
     return (
-      <section className={`events-grid ${className}`.trim()} aria-busy="true" aria-live="polite">
-        {Array.from({ length: 6 }).map((_, i) => <EventSkeleton key={i} />)}
+      <section className={`${base} ${className}`.trim()} aria-busy="true" aria-live="polite">
+        {Array.from({ length: layout === 'row' ? 4 : 6 }).map((_, i) => <EventSkeleton key={i} />)}
       </section>
     )
   }
@@ -31,7 +35,7 @@ const EventGrid: React.FC<Props> = ({ events, onEventClick, className = '', load
   }
 
   return (
-    <section className={`events-grid ${className}`.trim()}>
+    <section className={`${base} ${className}`.trim()}>
       {events.map((e) => (
         <EventCard key={e.id} event={e} onView={onEventClick} />
       ))}

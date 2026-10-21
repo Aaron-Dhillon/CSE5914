@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { EventGrid, EventFilters, EventHero } from '../components/events'
-import { Button, Heading, Text } from '../components/ui'
+import { EventGrid, EventFilters } from '../components/events'
+import { formatEventDate } from '../components/events/EventCard'
+import { Button, Text } from '../components/ui'
 import { useAuthContext } from '../context/AuthContext'
 import { request } from '../services/api'
 import '../styles/events.css'
@@ -258,7 +259,7 @@ const EventsPage: React.FC = () => {
 
       for (const cat of preferredList) {
         const bucket = resolveBucket(cat)
-        const slice = bucket.slice(0, 4)
+        const slice = bucket.slice(0, 10)
         for (const e of slice) selectedIds.add(e.id)
         sections.push({ title: String(cat.name), events: slice, totalCount: bucket.length })
 
@@ -279,248 +280,126 @@ const EventsPage: React.FC = () => {
     return { categorySections: sections, remainingEvents: remaining }
   }, [filtered, categories, preferredCategoryIds, myEvents, events])
 
-  const myEventsPreview = myEvents.slice(0, 4)
-  const hasMoreMyEvents = myEvents.length > 4
+  const anchorFor = (title: string) =>
+    String(title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
 
-  const joinedEventsPreview = joinedEvents.slice(0, 4)
-  const hasMoreJoinedEvents = joinedEvents.length > 4
+  const scrollTo = (anchor: string) =>
+    document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
-  const followingEventsPreview = followingEvents.slice(0, 4)
-  const hasMoreFollowingEvents = followingEvents.length > 4
+  // Banner: first upcoming event that has a poster
+  const featured = filtered.find((e) => e.thumbnail)
+
+  const personalSections = [
+    { key: 'created', title: 'Created', icon: '✏️', items: myEvents, loading: myEventsLoading, empty: "You haven't created any events yet.", cta: 'Create one ›', onCta: () => navigate('/events/create') },
+    { key: 'joined', title: 'Joined', icon: '🎟️', items: joinedEvents, loading: joinedEventsLoading, empty: 'Events you join show up here.', cta: 'Browse events ›', onCta: () => navigate('/events/all') },
+    { key: 'following', title: 'From people you follow', icon: '👥', items: followingEvents, loading: followingEventsLoading, empty: 'No upcoming events from your friends.', cta: 'Find people ›', onCta: () => navigate('/groups') },
+  ]
+  const filledPersonal = personalSections.filter((p) => p.loading || p.items.length > 0)
+  const emptyPersonal = personalSections.filter((p) => !p.loading && p.items.length === 0)
 
   return (
     <PageWrapper>
       <MainContent>
-        <div className="stack-vertical">
-          <EventHero />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Heading level={1}>Events</Heading>
-            <div>
-              <Button onClick={() => navigate('/events/create')}>Create Event</Button>
+        {featured ? (
+          <section className="feature-banner">
+            <img src={featured.thumbnail} alt="" />
+            <div className="feature-banner-body">
+              <span className="eyebrow">Featured</span>
+              <h1>{featured.title}</h1>
+              <p>{formatEventDate(featured.date)}{featured.location ? ` · ${featured.location}` : ''}</p>
+              <Button variant="white" onClick={() => handleEventClick(featured.id)}>View event</Button>
             </div>
-          </div>
+          </section>
+        ) : null}
 
-          <EventFilters
-            search={search}
-            setSearch={(s) => {
-              setSearch(s)
-              setPage(1)
-            }}
-            location={location}
-            setLocation={(l) => {
-              setLocation(l)
-              setPage(1)
-            }}
-            locations={locations}
-          />
+        <EventFilters
+          search={search}
+          setSearch={(s) => {
+            setSearch(s)
+            setPage(1)
+          }}
+          location={location}
+          setLocation={(l) => {
+            setLocation(l)
+            setPage(1)
+          }}
+          locations={locations}
+        >
+          <Button onClick={() => navigate('/events/create')}>＋ Create event</Button>
+        </EventFilters>
 
-          <div className="events-with-sidebar">
-            <div className="events-main">
-              {page === 1 && categorySections.length > 0 ? (
-                <aside className="events-sidebar" aria-label="Categories">
-                  <nav>
-                    <Heading level={3}>Categories</Heading>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                      {user ? (
-                        <>
-                          <li key="created-events-link" style={{ marginBottom: '8px' }}>
-                            <a
-                              href="#created-events"
-                              onClick={(ev) => {
-                                ev.preventDefault()
-                                const el = document.getElementById('created-events')
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}
-                            >
-                              Created Events
-                            </a>
-                          </li>
+        {page === 1 && (categorySections.length > 0 || user) ? (
+          <nav className="pills" aria-label="Jump to section">
+            {categorySections.map((sec) => (
+              <button key={sec.title} type="button" className="pill" onClick={() => scrollTo(anchorFor(sec.title))}>
+                {sec.title}
+              </button>
+            ))}
+            {user ? (
+              <button type="button" className="pill" onClick={() => scrollTo('your-events')}>Your events</button>
+            ) : null}
+          </nav>
+        ) : null}
 
-                          <li key="joined-events-link" style={{ marginBottom: '8px' }}>
-                            <a
-                              href="#joined-events"
-                              onClick={(ev) => {
-                                ev.preventDefault()
-                                const el = document.getElementById('joined-events')
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}
-                            >
-                              Joined Events
-                            </a>
-                          </li>
+        {loadingCategories ? <Text as="p" className="muted" style={{ marginTop: 24 }}>Loading personalized sections...</Text> : null}
 
-                          <li key="following-events-link" style={{ marginBottom: '8px' }}>
-                            <a
-                              href="#following-events"
-                              onClick={(ev) => {
-                                ev.preventDefault()
-                                const el = document.getElementById('following-events')
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}
-                            >
-                              From People You Follow
-                            </a>
-                          </li>
-                        </>
-                      ) : null}
-
-                      {categorySections.map((sec) => {
-                        const anchor = String(sec.title)
-                          .toLowerCase()
-                          .replace(/[^a-z0-9]+/g, '-')
-                          .replace(/-+/g, '-')
-                          .replace(/^-+|-+$/g, '')
-
-                        return (
-                          <li key={anchor} style={{ marginBottom: '8px' }}>
-                            <a
-                              href={`#${anchor}`}
-                              onClick={(ev) => {
-                                ev.preventDefault()
-                                const el = document.getElementById(anchor)
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}
-                            >
-                              {sec.title}
-                            </a>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </nav>
-                </aside>
-              ) : null}
-
-              <div className="events-content">
-                {loadingCategories ? <Text as="p">Loading personalized sections...</Text> : null}
-
-                {page === 1 &&
-                  categorySections.map((sec: any) => {
-                    const anchor = String(sec.title)
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]+/g, '-')
-                      .replace(/-+/g, '-')
-                      .replace(/^-+|-+$/g, '')
-
-                    const hasMore = sec.totalCount > sec.events.length
-
-                    return (
-                      <section id={anchor} key={sec.title} style={{ marginBottom: '48px' }}>
-                        <Heading level={2} style={{ marginBottom: '20px' }}>
-                          {sec.title}
-                        </Heading>
-                        <EventGrid events={sec.events} onEventClick={handleEventClick} />
-                        {hasMore && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                            <Button
-                              onClick={() =>
-                                navigate(`/events/all?category=${encodeURIComponent(sec.title)}`)
-                              }
-                            >
-                              View More
-                            </Button>
-                          </div>
-                        )}
-                      </section>
-                    )
-                  })}
-
-                {page === 1 && categorySections.length === 0 && (
-                  <section id="upcoming-events" style={{ marginBottom: '48px' }}>
-                    <Heading level={2} style={{ marginBottom: '20px' }}>
-                      Upcoming Events
-                    </Heading>
-                    <EventGrid events={remainingEvents.slice(0, 8)} onEventClick={handleEventClick} />
-                  </section>
-                )}
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginTop: '32px',
-                    marginBottom: '32px',
-                  }}
-                >
-                  <Button onClick={() => navigate('/events/all')}>View All Events</Button>
-                </div>
-
-                {user && page === 1 && (
-                  <section style={{ marginBottom: '48px' }}>
-                    <Heading level={2} id="my-events">
-                      My Events
-                    </Heading>
-
-                    <Heading level={3} id="created-events">
-                      Created Events
-                    </Heading>
-                    {!myEventsLoading && myEvents.length === 0 && (
-                      <Text as="p">You haven't created any events yet.</Text>
-                    )}
-                    {(myEventsLoading || myEventsPreview.length > 0) && (
-                      <EventGrid
-                        events={myEventsPreview}
-                        loading={myEventsLoading}
-                        onEventClick={handleEventClick}
-                      />
-                    )}
-                    {hasMoreMyEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=created')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-
-                    <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>
-                      Joined Events
-                    </Heading>
-                    {!joinedEventsLoading && joinedEvents.length === 0 && (
-                      <Text as="p">You haven't joined any events yet.</Text>
-                    )}
-                    {(joinedEventsLoading || joinedEventsPreview.length > 0) && (
-                      <EventGrid
-                        events={joinedEventsPreview}
-                        loading={joinedEventsLoading}
-                        onEventClick={handleEventClick}
-                      />
-                    )}
-                    {hasMoreJoinedEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=joined')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-
-                    <Heading level={3} id="following-events" style={{ marginTop: 'var(--space-lg)' }}>
-                      From People You Follow
-                    </Heading>
-                    {!followingEventsLoading && followingEvents.length === 0 && (
-                      <Text as="p">No upcoming events from your friends.</Text>
-                    )}
-                    {(followingEventsLoading || followingEventsPreview.length > 0) && (
-                      <EventGrid
-                        events={followingEventsPreview}
-                        loading={followingEventsLoading}
-                        onEventClick={handleEventClick}
-                      />
-                    )}
-                    {hasMoreFollowingEvents && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <Button onClick={() => navigate('/events/all?section=following')}>
-                          View More
-                        </Button>
-                      </div>
-                    )}
-                  </section>
-                )}
-
+        {page === 1 &&
+          categorySections.map((sec) => (
+            <section id={anchorFor(sec.title)} key={sec.title} className="shelf">
+              <div className="shelf-h">
+                <h2>{sec.title}</h2>
+                <button type="button" className="shelf-link" onClick={() => navigate(`/events/all?category=${encodeURIComponent(sec.title)}`)}>
+                  See all ›
+                </button>
               </div>
+              <EventGrid layout="row" events={sec.events} onEventClick={handleEventClick} />
+            </section>
+          ))}
+
+        {page === 1 && categorySections.length === 0 && (
+          <section id="upcoming-events" className="shelf">
+            <div className="shelf-h">
+              <h2>Upcoming events</h2>
+              <button type="button" className="shelf-link" onClick={() => navigate('/events/all')}>See all ›</button>
             </div>
-          </div>
+            <EventGrid events={remainingEvents.slice(0, 8)} onEventClick={handleEventClick} />
+          </section>
+        )}
+
+        <div className="viewall">
+          <Button variant="ghost" onClick={() => navigate('/events/all')}>View all events</Button>
         </div>
+
+        {user && page === 1 && (
+          <section id="your-events" className="yours shelf">
+            <h2>Your events</h2>
+
+            {filledPersonal.map((p) => (
+              <div key={p.key} className="shelf" style={{ marginTop: 24 }}>
+                <div className="shelf-h">
+                  <h2 style={{ fontSize: 17 }}>{p.title}</h2>
+                  {p.items.length > 4 ? (
+                    <button type="button" className="shelf-link" onClick={() => navigate(`/events/all?section=${p.key}`)}>See all ›</button>
+                  ) : null}
+                </div>
+                <EventGrid layout="row" events={p.items} loading={p.loading} onEventClick={handleEventClick} />
+              </div>
+            ))}
+
+            {emptyPersonal.length > 0 ? (
+              <div className="empty-grid">
+                {emptyPersonal.map((p) => (
+                  <div key={p.key} className="card empty-card">
+                    <span className="ic" aria-hidden="true">{p.icon}</span>
+                    <h3>{p.title}</h3>
+                    <p>{p.empty}</p>
+                    <button type="button" className="shelf-link" onClick={p.onCta}>{p.cta}</button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        )}
       </MainContent>
     </PageWrapper>
   )

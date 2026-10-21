@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Heading, Text, Button, LazyImage } from '../components/ui'
-import EventHero from '../components/events/EventHero'
+import { formatEventDate } from '../components/events/EventCard'
 import { useAuthContext } from '../context/AuthContext'
 import '../styles/events.css'
 import * as eventsService from '../services/events'
@@ -96,88 +96,84 @@ const EventDetail: React.FC = () => {
     if (isCreator) {
       return (
         <>
-          <Button onClick={() => navigate(`/events/create?editEventId=${event.id}`)}>Edit Event</Button>
-          <Button onClick={handleDelete} disabled={rsvpLoading}>{rsvpLoading ? 'Deleting...' : 'Delete Event'}</Button>
+          <Button variant="white" onClick={() => navigate(`/events/create?editEventId=${event.id}`)}>Edit event</Button>
+          <Button variant="ghost" onClick={handleDelete} disabled={rsvpLoading}>{rsvpLoading ? 'Deleting...' : 'Delete event'}</Button>
         </>
       )
     }
     if (isClosed) {
-      return <Button disabled>Registration Closed</Button>
+      return <Button variant="white" disabled>Registration closed</Button>
     }
     if (isAttending) {
-      return <Button onClick={handleLeave} disabled={rsvpLoading}>{rsvpLoading ? 'Leaving...' : 'Leave Event'}</Button>
+      return <Button variant="ghost" onClick={handleLeave} disabled={rsvpLoading}>{rsvpLoading ? 'Leaving...' : '✓ Going · Leave'}</Button>
     }
     if (isFull) {
-      return <Button disabled>Event is Full</Button>
+      return <Button variant="white" disabled>Event is full</Button>
     }
-    return <Button onClick={handleJoin} disabled={rsvpLoading}>{rsvpLoading ? 'Joining...' : 'Join Event'}</Button>
+    return <Button variant="white" onClick={handleJoin} disabled={rsvpLoading}>{rsvpLoading ? 'Joining...' : '＋ Join event'}</Button>
   }
 
   return (
     <PageWrapper>
       <MainContent>
-        <EventHero />
+        <button type="button" className="back-link" onClick={() => navigate(-1)}>‹ Back</button>
 
-        <div className="detail-card detail-card--centered">
-          {loading ? (
-            <Heading level={2}>Loading…</Heading>
-          ) : error ? (
-            <div>
-              <Heading level={2}>Error</Heading>
-              <Text as="div">{error}</Text>
-              <div className="event-actions">
-                <Button onClick={() => navigate(-1)}>Back</Button>
-              </div>
-            </div>
-          ) : event ? (
-            <>
-              <Heading level={1} className="detail-title">{event.title}</Heading>
-
-              <div className="detail-thumb-wrap">
-                <LazyImage src={event.thumbnail || '/block.jpg'} alt={event.title} width={640} height={320} className="detail-thumb" />
-              </div>
-
-              {event.createdBy && (
-                <div className="detail-creator">
-                  <Text>
-                    Created by:
-                    <span
-                      role="link"
-                      onClick={() => navigate(`/profile/${encodeURIComponent(event.createdBy || '')}`)}
-                      style={{ color: 'var(--color-primary)', cursor: 'pointer', marginLeft: 6 }}
-                    >
-                      {event.createdBy}
-                    </span>
-                  </Text>
+        {loading ? (
+          <div className="detail-hero detail-hero--empty"><Heading level={2}>Loading…</Heading></div>
+        ) : error || !event ? (
+          <div className="card detail-empty">
+            <Heading level={2}>{error ? 'Something went wrong' : 'Event not found'}</Heading>
+            {error ? <Text as="p" className="muted">{error}</Text> : null}
+            <Button variant="ghost" onClick={() => navigate('/events')}>Browse events</Button>
+          </div>
+        ) : (
+          <>
+            <section className="detail-hero">
+              <img className="detail-backdrop" src={event.thumbnail || '/block.jpg'} alt="" />
+              <div className="detail-hero-body">
+                <div className="detail-poster">
+                  <LazyImage src={event.thumbnail || '/block.jpg'} alt={event.title} width={640} height={360} />
                 </div>
-              )}
-
-              <div className="detail-meta">
-                <div className="detail-stats">
-                  {currentCapacity} joined{event.capacity != null ? ` · ${spotsLeft} spots left` : ''}
+                <div>
+                  <span className="eyebrow">Event</span>
+                  <h1 className="detail-title">{event.title}</h1>
+                  <div className="detail-chips">
+                    <span>🗓 {formatEventDate(event.date)}</span>
+                    {event.location ? <span>📍 {event.location}</span> : null}
+                    <span>👥 {currentCapacity} going{event.capacity != null ? ` · ${spotsLeft} spots left` : ''}</span>
+                  </div>
+                  <div className="detail-actions">{renderRsvpButton()}</div>
                 </div>
-                <div className="detail-location">{event.location}</div>
-                <div className="detail-date">{event.date ? new Date(event.date).toLocaleString() : 'TBA'}</div>
               </div>
+            </section>
 
-              <div className="detail-description">
-                <Text as="div">{event.description || 'No description provided.'}</Text>
-              </div>
-
-              <div className="event-actions">
-                {renderRsvpButton()}
-                <Button onClick={() => navigate(-1)}>Back</Button>
-              </div>
-            </>
-          ) : (
-            <div>
-              <Heading level={2}>Event not found</Heading>
-              <div className="event-actions">
-                <Button onClick={() => navigate(-1)}>Back</Button>
-              </div>
+            <div className="detail-cols">
+              <section className="card detail-panel">
+                <h2>About</h2>
+                <Text as="div" className="detail-description">{event.description || 'No description provided.'}</Text>
+              </section>
+              <aside className="card detail-panel">
+                <h2>Details</h2>
+                <dl className="detail-list">
+                  <dt>When</dt><dd>{event.date ? new Date(event.date).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' }) : 'TBA'}</dd>
+                  {event.location ? <><dt>Where</dt><dd>{event.location}</dd></> : null}
+                  <dt>Going</dt><dd>{currentCapacity}{event.capacity != null ? ` of ${event.capacity}` : ''}</dd>
+                  {event.closeDate ? <><dt>RSVP by</dt><dd>{new Date(event.closeDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</dd></> : null}
+                  {event.createdBy ? (
+                    <>
+                      <dt>Hosted by</dt>
+                      <dd>
+                        <button type="button" className="shelf-link" onClick={() => navigate(`/profile/${encodeURIComponent(event.createdBy || '')}`)}>
+                          {event.createdBy}
+                        </button>
+                      </dd>
+                    </>
+                  ) : null}
+                </dl>
+              </aside>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </MainContent>
     </PageWrapper>
   )

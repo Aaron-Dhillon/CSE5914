@@ -3,6 +3,11 @@ export const CANONICAL_CATEGORIES = [
   'concerts', 'nightlife_djs', 'sports', 'musicals', 'plays_dance', 'comedy_shows', 'family_holiday', 'other'
 ]
 
+export const CATEGORY_LABELS: Record<string, string> = {
+  concerts: 'Concerts', nightlife_djs: 'Nightlife & DJs', sports: 'Sports', musicals: 'Musicals',
+  plays_dance: 'Plays & Dance', comedy_shows: 'Comedy & Shows', family_holiday: 'Family & Holiday', other: 'Other',
+}
+
 const rawToCanonical: Record<string, string> = {}
 
 export function mapCategory(raw?: string | null): string | null {

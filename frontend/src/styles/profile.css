@@ -51,8 +51,8 @@
 
 .profile-badge--ok {
   color: var(--color-success);
-  border-color: color-mix(in srgb, var(--color-success) 35%, white);
-  background: color-mix(in srgb, var(--color-success) 12%, white);
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.15); color: #4ade80;
 }
 
 .profile-helper {
@@ -243,7 +243,7 @@
   margin-top: -6px;
   border: 3px solid var(--color-primary);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-bg) 82%, white);
+  background: rgba(255,255,255,0.08);
   box-shadow: 0 0 0 3px rgba(187,0,0,0.10), var(--shadow-sm);
 }
 
@@ -265,7 +265,7 @@
   height: 20px;
   border: 3px solid var(--color-primary);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-bg) 82%, white);
+  background: rgba(255,255,255,0.08);
   box-shadow: 0 0 0 3px rgba(187,0,0,0.10), var(--shadow-sm);
 }
 
@@ -318,4 +318,50 @@
   .profile-choice-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ---------- Midnight profile ---------- */
+.profile-head { position: relative; margin-top: 28px; padding: 0; overflow: hidden; }
+.profile-banner { height: 160px; background: radial-gradient(500px 200px at 20% 0%, rgba(187,0,0,.6), transparent 70%), radial-gradient(400px 200px at 90% 100%, rgba(37,99,235,.35), transparent 70%), #12141b; }
+.profile-info { display: flex; align-items: flex-end; gap: 20px; padding: 0 28px 24px; margin-top: -48px; flex-wrap: wrap; }
+.profile-avatar { width: 104px; height: 104px; border-radius: 50%; background: linear-gradient(135deg, #BB0000, #ff6b6b); display: grid; place-items: center; font-size: 38px; font-weight: 800; border: 4px solid var(--color-bg); flex: none; }
+.profile-info h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.profile-info .profile-badge { font-size: 12px; }
+.profile-info p { margin: 4px 0 0; font-size: 14px; }
+.profile-bio { padding: 0 28px 26px; color: #cfcfda; font-size: 15px; max-width: 640px; margin: 0; }
+
+.profile-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; align-items: start; }
+.profile-panel { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.profile-panel h2 { font-size: 18px; margin: 0 0 4px; }
+.profile-panel .input-label { display: block; font-size: 12px; color: var(--color-text-muted); font-weight: 600; margin-bottom: 6px; }
+.profile-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-error { color: #ff6b6b; font-size: 12px; margin: 6px 0 0; }
+.profile-panel .profile-helper { font-size: 12px; color: var(--color-text-muted); margin: 6px 0 0; }
+
+.profile-toggle { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+.switch { width: 42px; height: 24px; padding: 0; border-radius: 999px; background: rgba(255,255,255,.15); position: relative; border: 0; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
+.switch.on { background: var(--color-primary); }
+.switch.on::after { left: 21px; }
+
+.profile-q { font-size: 13px; color: #cfcfda; font-weight: 600; margin: 8px 0 0; }
+.profile-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* all time cells equal size: 4 equal columns, fixed height */
+.time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: center; }
+.time-head { font-size: 13px; color: var(--color-text-muted); text-align: center; }
+.time-cell { height: 40px; padding: 0; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: #fff; font-size: 14px; }
+.time-cell.on { background: rgba(187,0,0,.25); border-color: var(--color-primary); }
+
+.segmented { display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px; gap: 4px; border-radius: 12px; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.08); }
+.segmented--3 { grid-template-columns: repeat(3, 1fr); }
+.segmented button { height: 36px; padding: 0 6px; border-radius: 9px; font-size: 13px; color: #a3a3b2; background: transparent; border: 0; }
+.segmented button.on { background: #fff; color: #0b0d12; font-weight: 600; }
+
+.profile-save { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin: 22px 0 72px; }
+.profile-save p { margin: 0; }
+
+@media (max-width: 820px) {
+  .profile-cols, .profile-two { grid-template-columns: 1fr; }
+  .profile-info, .profile-bio { padding-left: 18px; padding-right: 18px; }
 }

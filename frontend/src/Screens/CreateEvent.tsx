@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { Card, Heading, Input, Button, Text } from '../components/ui'
+import { Heading, Input, Button, Text } from '../components/ui'
+import '../styles/forms.css'
 import { request } from '../services/api'
 import { supabase } from '../services/supabase'
 import { addGroupEvent } from '../services/groups'
@@ -160,85 +161,124 @@ const CreateEvent: React.FC = () => {
     }
   }
 
+  const clearPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   return (
     <PageWrapper>
       <MainContent>
-        <Heading level={1}>{isEditing ? 'Edit Event' : groupId ? 'Create Group Event' : 'Create Event'}</Heading>
-        {groupId && !isEditing && (
-          <Text as="p" style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>
-            This event will be linked to your group.
-          </Text>
-        )}
+        <button type="button" className="back-link" onClick={() => navigate(-1)}>‹ Back</button>
+        <div className="form-head">
+          <h1>{isEditing ? 'Edit event' : groupId ? 'Create group event' : 'Create an event'}</h1>
+          <p className="muted">
+            {groupId && !isEditing ? 'This event will be linked to your group.' : 'Fill in the basics. You can edit it later.'}
+          </p>
+        </div>
+
         {initialLoading ? (
-          <Card className="card section-card mt-2"><Heading level={2}>Loading event...</Heading></Card>
+          <div className="card form-section"><Heading level={2}>Loading event...</Heading></div>
         ) : (
-          <Card className="card section-card mt-2">
-            <div className="form-stack">
-              <Input label="Event Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event Title" />
-              <div>
-                <label className="input-label" htmlFor="description">Description</label>
-                <textarea id="description" className="input" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your event..." />
-              </div>
-              <Input label="Location Name" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="e.g. Ohio Union" />
-              <Input label="Location Address" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} placeholder="e.g. 1739 N High St, Columbus, OH" />
-              <div>
-                <label className="input-label" htmlFor="start-time">Start Time *</label>
-                <input id="start-time" className="input" type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-              </div>
-              <div>
-                <label className="input-label" htmlFor="end-time">End Time</label>
-                <input id="end-time" className="input" type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-              </div>
-              <Input label="Number of People" type="number" value={capacity as any} onChange={(e) => setCapacity(e.target.value ? Number(e.target.value) : '')} placeholder="Expected capacity" />
-              <div>
-                <label className="input-label" htmlFor="close-date">Registration Close Date</label>
-                <input id="close-date" className="input" type="date" value={closeDate} onChange={(e) => setCloseDate(e.target.value)} />
-              </div>
-              <Input label="Event Fee ($)" type="number" value={fee as any} onChange={(e) => setFee(e.target.value ? Number(e.target.value) : '')} placeholder="0 for free" />
-              <div>
-                <label className="input-label" htmlFor="category">Category</label>
-                <select id="category" className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  <option value="">Select a category (optional)</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="input-label">Event Photo (optional)</label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  style={{ border: '2px dashed var(--color-border, #ccc)', borderRadius: 'var(--radius-md, 8px)', padding: '1.5rem', textAlign: 'center', cursor: 'pointer', background: 'var(--color-surface, #fafafa)' }}
-                >
-                  {photoPreview ? (
-                    <div>
-                      <img src={photoPreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }} />
-                      <p style={{ marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>{photoFile?.name}</p>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--color-danger, red)', cursor: 'pointer', textDecoration: 'underline' }}>
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ color: 'var(--color-text-muted)' }}>
-                      <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Click or drag & drop an image here</p>
-                      <p style={{ fontSize: '0.875rem' }}>PNG, JPG, WEBP up to 5MB</p>
-                    </div>
-                  )}
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          <div className="form-layout">
+            <div className="form-main">
+              <section className="card form-section">
+                <h2>Basics</h2>
+                <Input label="Event title *" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Friday comedy night at the Funny Bone" />
+                <div>
+                  <label className="input-label" htmlFor="description">Description</label>
+                  <textarea id="description" className="input" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What should people know?" />
                 </div>
-              </div>
-              <div className="section-actions">
-                <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
-                <Button onClick={handleCreate} disabled={loading || initialLoading}>
-                  {loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Event' : 'Create Event')}
-                </Button>
-              </div>
-              {error ? <Text as="p" className="status-error">{error}</Text> : null}
-              {message ? <Text as="p" className="status-active">{message}</Text> : null}
+                <div>
+                  <span className="input-label">Category</span>
+                  <div className="pills pills--wrap" role="radiogroup" aria-label="Category">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={category === cat.name}
+                        className={category === cat.name ? 'pill on' : 'pill'}
+                        onClick={() => setCategory(category === cat.name ? '' : cat.name)}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="card form-section">
+                <h2>When &amp; where</h2>
+                <div className="form-two">
+                  <div>
+                    <label className="input-label" htmlFor="start-time">Starts *</label>
+                    <input id="start-time" className="input" type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="input-label" htmlFor="end-time">Ends</label>
+                    <input id="end-time" className="input" type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                  </div>
+                </div>
+                <Input label="Place" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="e.g. Ohio Union" />
+                <Input label="Address" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} placeholder="e.g. 1739 N High St, Columbus, OH" />
+              </section>
+
+              <section className="card form-section">
+                <h2>Spots &amp; price</h2>
+                <div className="form-two">
+                  <Input label="Capacity" type="number" value={capacity as any} onChange={(e) => setCapacity(e.target.value ? Number(e.target.value) : '')} placeholder="Leave empty for no limit" />
+                  <Input label="Fee ($)" type="number" value={fee as any} onChange={(e) => setFee(e.target.value ? Number(e.target.value) : '')} placeholder="0 for free" />
+                </div>
+                <div>
+                  <label className="input-label" htmlFor="close-date">RSVP closes</label>
+                  <input id="close-date" className="input" type="date" value={closeDate} onChange={(e) => setCloseDate(e.target.value)} />
+                </div>
+              </section>
             </div>
-          </Card>
+
+            <aside className="form-side">
+              <span className="input-label">Cover photo</span>
+              <div
+                className={`dropzone ${photoPreview ? 'has-photo' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter') fileInputRef.current?.click() }}
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+              >
+                {photoPreview ? (
+                  <>
+                    <img src={photoPreview} alt="Cover preview" />
+                    <button type="button" className="dropzone-remove" onClick={clearPhoto}>Remove</button>
+                  </>
+                ) : (
+                  <div className="dropzone-empty">
+                    <span aria-hidden="true">🖼️</span>
+                    <strong>Add a cover photo</strong>
+                    <span className="muted">Click or drop an image · PNG, JPG, WEBP up to 5MB</span>
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              </div>
+              <p className="preview-title">{title.trim() || 'Your event title'}</p>
+              <p className="muted preview-meta">
+                {[startTime ? new Date(startTime).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Date', locationName.trim() || 'Place'].join(' · ')}
+              </p>
+
+              <div className="form-submit">
+                <Button onClick={handleCreate} disabled={loading || initialLoading}>
+                  {loading ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save changes' : 'Create event')}
+                </Button>
+                <Button variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
+              </div>
+              {error ? <Text as="p" className="error-text">{error}</Text> : null}
+              {message ? <Text as="p" className="status-active">{message}</Text> : null}
+            </aside>
+          </div>
         )}
       </MainContent>
     </PageWrapper>

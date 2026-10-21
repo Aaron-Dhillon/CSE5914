@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
-import { Button, Card, Heading, Input, Text } from '../components/ui'
+import { Button, Input, Text } from '../components/ui'
 import '../styles/profile.css'
 import { getProfile, updateProfile } from '../services/auth'
 import { useAuthContext } from '../context/AuthContext'
@@ -15,10 +15,6 @@ import {
 const Profile: React.FC = () => {
   const bioCharacterLimit = 280
   const graduationYearOptions = Array.from({ length: 8 }, (_, index) => String(new Date().getFullYear() + index))
-  const hasCarOptions = [
-    { label: 'Yes', value: true },
-    { label: 'No', value: false },
-  ]
   
   // Settings/Preferences constants
   const travelDistanceOptions = ['On campus', 'Short commute', 'Anywhere']
@@ -58,7 +54,6 @@ const Profile: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [showValidation, setShowValidation] = useState(false)
-  const [openMenu, setOpenMenu] = useState<'graduationYear' | 'hasCar' | 'travelDistance' | null>(null)
   
   // Preferences states
   const [preferenceMessage, setPreferenceMessage] = useState('')
@@ -72,8 +67,6 @@ const Profile: React.FC = () => {
 
   const { user } = useAuthContext()
   const requiredFilled = displayName.trim() !== '' && major.trim() !== '' && graduationYear !== ''
-  const basicFilled = displayName.trim() !== ''
-  const academicFilled = basicFilled && major.trim() !== '' && graduationYear !== ''
 
   // Load profile and preferences
   useEffect(() => {
@@ -128,12 +121,6 @@ const Profile: React.FC = () => {
     loadData()
     return () => { isMounted = false }
   }, [user])
-
-  useEffect(() => {
-    function closeMenu() { setOpenMenu(null) }
-    window.addEventListener('click', closeMenu)
-    return () => window.removeEventListener('click', closeMenu)
-  }, [])
 
   const toggleInterest = (categoryId: string | number) => {
     setInterests((current) =>
@@ -211,322 +198,188 @@ const Profile: React.FC = () => {
     }
   }
 
+  const busy = loading || loadingCategories
+  const eventSizeShort = ['Small', 'Medium', 'Large', 'Mega']
+
   return (
     <PageWrapper>
       <MainContent>
-        <Heading level={1}>Profile</Heading>
-        <Text as="p" className="mb-1">Update your profile details and event preferences below. All fields are required.</Text>
+        <section className="card profile-head" aria-busy={busy}>
+          <div className="profile-banner" aria-hidden="true" />
+          <div className="profile-info">
+            <div className="profile-avatar" aria-hidden="true">{(displayName.trim().charAt(0) || '?').toUpperCase()}</div>
+            <div>
+              <h1>
+                {displayName.trim() || 'Your profile'}
+                <span className={isVerified ? 'profile-badge profile-badge--ok' : 'profile-badge'}>
+                  {isVerified ? '● Verified' : 'Not verified'}
+                </span>
+              </h1>
+              <p className="muted">
+                {[major.trim(), graduationYear ? `Class of ${graduationYear}` : '', email].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+          </div>
+          {bio.trim() ? <p className="profile-bio">{bio}</p> : null}
+        </section>
 
-        {loading || loadingCategories ? <Text as="p">Loading profile...</Text> : null}
+        {busy ? <Text as="p" className="muted" style={{ marginTop: 16 }}>Loading profile...</Text> : null}
         {error ? <Text as="p" className="error-text">{error}</Text> : null}
         {categoryError ? <Text as="p" className="error-text">{categoryError}</Text> : null}
 
-        <section className="profile-section" aria-busy={loading || loadingCategories}>
-          <Heading level={2} className="section-title">Profile Details</Heading>
-          <Card className="card card--elevated section-card mt-2 profile-card">
+        <div className="profile-cols">
+          <section className="card profile-panel">
+            <h2>Profile details</h2>
 
-            {/* Account */}
-            <div className="profile-block">
-              <Text as="p" className="profile-block-title">Account</Text>
-              <div className="profile-grid">
-                <div className="profile-static-field">
-                  <label className="input-label">Email</label>
-                  <p className="profile-static-value">{email}</p>
-                </div>
-                <div className="profile-static-field">
-                  <label className="input-label">Status</label>
-                  <p>
-                    <span className={isVerified ? 'profile-badge profile-badge--ok' : 'profile-badge'}>
-                      {isVerified ? 'Verified' : 'Not Verified'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Input
+              label="Display name *"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Enter your display name"
+            />
+            {showValidation && !displayName.trim() ? <p className="field-error">Display name is required.</p> : null}
 
-            <div className="profile-divider" />
-
-            {/* Basic */}
-            <div className="profile-block">
-              <Text as="p" className="profile-block-title">
-                Basic
-                {displayName.trim() === '' && (
-                  <span style={{ color: 'var(--error, red)', fontSize: '0.8rem' }}> * required</span>
-                )}
-              </Text>
-              {showValidation && !displayName.trim() && (
-                <Text as="p" style={{ color: 'var(--error, red)', fontSize: '0.85rem', marginBottom: 8 }}>
-                  Display Name is required.
-                </Text>
-              )}
-              <div className="profile-grid">
-                <Input
-                  label="Display Name *"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your display name"
-                />
-                <div>
-                  <label className="input-label" htmlFor="birth-date">Birth Date</label>
-                  <input
-                    id="birth-date"
-                    type="date"
-                    className="input"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="input-label" htmlFor="has-car-trigger">Has Car</label>
-                  <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      id="has-car-trigger"
-                      type="button"
-                      className="profile-dropdown-trigger"
-                      aria-haspopup="listbox"
-                      aria-expanded={openMenu === 'hasCar'}
-                      onClick={() => setOpenMenu((current) => current === 'hasCar' ? null : 'hasCar')}
-                    >
-                      {hasCar ? 'Yes' : 'No'}
-                    </button>
-                    {openMenu === 'hasCar' ? (
-                      <div className="profile-dropdown-menu" role="listbox" aria-labelledby="has-car-trigger">
-                        {hasCarOptions.map((option) => (
-                          <button
-                            key={option.label}
-                            type="button"
-                            className={hasCar === option.value ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                            onClick={() => { setHasCar(option.value); setOpenMenu(null) }}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="profile-divider" />
-
-            {/* Academic - greyed out until displayName filled */}
-            <div
-              className="profile-block"
-              style={{
-                opacity: basicFilled ? 1 : 0.4,
-                pointerEvents: basicFilled ? 'auto' : 'none'
-              }}
-            >
-              <Text as="p" className="profile-block-title">
-                Academic
-                {basicFilled && (major.trim() === '' || graduationYear === '') && (
-                  <span style={{ color: 'var(--error, red)', fontSize: '0.8rem' }}> * required</span>
-                )}
-              </Text>
-              {showValidation && basicFilled && (!major.trim() || !graduationYear) && (
-                <Text as="p" style={{ color: 'var(--error, red)', fontSize: '0.85rem', marginBottom: 8 }}>
-                  Major and Graduation Year are required.
-                </Text>
-              )}
-              <div className="profile-grid">
+            <div className="profile-two">
+              <div>
                 <Input
                   label="Major *"
                   value={major}
                   onChange={(e) => setMajor(e.target.value)}
                   placeholder="Enter your major"
                 />
-                <div>
-                  <label className="input-label" htmlFor="graduation-year-trigger">Graduation Year *</label>
-                  <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      id="graduation-year-trigger"
-                      type="button"
-                      className="profile-dropdown-trigger"
-                      aria-haspopup="listbox"
-                      aria-expanded={openMenu === 'graduationYear'}
-                      onClick={() => setOpenMenu((current) => current === 'graduationYear' ? null : 'graduationYear')}
-                    >
-                      <span className={graduationYear ? '' : 'profile-dropdown-placeholder'}>
-                        {graduationYear || 'Select graduation year'}
-                      </span>
-                    </button>
-                    {openMenu === 'graduationYear' ? (
-                      <div className="profile-dropdown-menu" role="listbox" aria-labelledby="graduation-year-trigger">
-                        {graduationYearOptions.map((year) => (
-                          <button
-                            key={year}
-                            type="button"
-                            className={graduationYear === year ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                            onClick={() => { setGraduationYear(year); setOpenMenu(null) }}
-                          >
-                            {year}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <Text as="p" className="profile-helper">Expected year you finish your degree.</Text>
-                </div>
+                {showValidation && !major.trim() ? <p className="field-error">Major is required.</p> : null}
               </div>
-            </div>
-
-            <div className="profile-divider" />
-
-            {/* About - greyed out until academic filled */}
-            <div
-              className="profile-block"
-              style={{
-                opacity: academicFilled ? 1 : 0.4,
-                pointerEvents: academicFilled ? 'auto' : 'none'
-              }}
-            >
-              <Text as="p" className="profile-block-title">About</Text>
-              <div className="profile-grid">
-                <div className="profile-span-full">
-                  <label className="input-label" htmlFor="profile-bio">Bio</label>
-                  <textarea
-                    id="profile-bio"
-                    className="input profile-textarea"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Write a short bio others can see..."
-                    maxLength={bioCharacterLimit}
-                    rows={5}
-                  />
-                  <Text as="p" className="profile-helper">{bio.length}/{bioCharacterLimit} characters</Text>
-                </div>
-              </div>
-            </div>
-
-          </Card>
-        </section>
-
-        <section className="profile-section">
-          <Heading level={2} className="section-title">Event Preferences</Heading>
-          <Card className="card card--elevated section-card mt-2">
-            <div className="form-stack">
               <div>
-                <Text as="p" className="mb-1">What kinds of events interest you most? *</Text>
-                <div className="profile-choice-grid">
-                  {interestOptions.map((interest) => {
-                    const selected = interests.includes(interest.id)
+                <label className="input-label" htmlFor="graduation-year">Graduation year *</label>
+                <select id="graduation-year" className="input" value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)}>
+                  <option value="">Select year</option>
+                  {graduationYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                </select>
+                {showValidation && !graduationYear ? <p className="field-error">Graduation year is required.</p> : null}
+              </div>
+            </div>
 
+            <div>
+              <label className="input-label" htmlFor="birth-date">Birth date</label>
+              <input id="birth-date" type="date" className="input" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+            </div>
+
+            <div>
+              <label className="input-label" htmlFor="profile-bio">Bio</label>
+              <textarea
+                id="profile-bio"
+                className="input profile-textarea"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Write a short bio others can see..."
+                maxLength={bioCharacterLimit}
+                rows={4}
+              />
+              <p className="profile-helper">{bio.length}/{bioCharacterLimit} characters</p>
+            </div>
+
+            <div className="profile-toggle">
+              <span id="has-car-label">Has a car</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hasCar}
+                aria-labelledby="has-car-label"
+                className={hasCar ? 'switch on' : 'switch'}
+                onClick={() => setHasCar((v) => !v)}
+              />
+            </div>
+          </section>
+
+          <section className="card profile-panel">
+            <h2>Event preferences</h2>
+
+            <p className="profile-q">What kinds of events interest you most? *</p>
+            <div className="profile-chips">
+              {interestOptions.map((interest) => {
+                const selected = interests.includes(interest.id)
+                return (
+                  <button
+                    key={String(interest.id)}
+                    type="button"
+                    className={selected ? 'pill on' : 'pill'}
+                    aria-pressed={selected}
+                    onClick={() => toggleInterest(interest.id)}
+                  >
+                    {interest.name}
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="profile-q">When are you usually free? *</p>
+            <div className="time-grid" role="group" aria-label="Free times">
+              <span />
+              {eventTimeOptions[0].options.map((o) => <span key={o.label} className="time-head">{o.label}</span>)}
+              {eventTimeOptions.map((section) => (
+                <React.Fragment key={section.group}>
+                  <span className="time-head">{section.group}</span>
+                  {section.options.map((option) => {
+                    const selected = eventTimes.includes(option.id)
                     return (
                       <button
-                        key={String(interest.id)}
+                        key={option.id}
                         type="button"
-                        className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
+                        className={selected ? 'time-cell on' : 'time-cell'}
                         aria-pressed={selected}
-                        onClick={() => toggleInterest(interest.id)}
+                        aria-label={option.value}
+                        onClick={() => toggleEventTime(option.id)}
                       >
-                        {interest.name}
+                        {selected ? '✓' : ''}
                       </button>
                     )
                   })}
-                </div>
-                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
-              </div>
-
-              <div>
-                <Text as="p" className="mb-1">When do you usually want events? *</Text>
-                <div className="profile-choice-groups">
-                  {eventTimeOptions.map((section) => (
-                    <div key={section.group} className="profile-choice-group">
-                      <Text as="p" className="profile-choice-group-title">{section.group}</Text>
-                      <div className="profile-choice-stack">
-                        {section.options.map((option) => {
-                          const selected = eventTimes.includes(option.id)
-
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
-                              aria-pressed={selected}
-                              onClick={() => toggleEventTime(option.id)}
-                            >
-                              {option.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="event-size">What size events do you prefer? *</label>
-                <div className="profile-range-control">
-                  <input
-                    id="event-size"
-                    className="profile-range"
-                    style={{ '--range-progress': `${((eventSize - 1) / (eventSizeLabels.length - 1)) * 100}%` } as React.CSSProperties}
-                    type="range"
-                    min="1"
-                    max={eventSizeLabels.length}
-                    step="1"
-                    value={eventSize}
-                    onChange={(e) => setEventSize(Number(e.target.value))}
-                  />
-                  <div className="profile-range-labels" aria-hidden="true">
-                    {eventSizeLabels.map((label) => (
-                      <span key={label}>{label}</span>
-                    ))}
-                  </div>
-                </div>
-                <Text as="p" className="profile-helper">Selected: {eventSizeLabels[eventSize - 1]}</Text>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="travel-distance-trigger">How far are you willing to travel? *</label>
-                <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    id="travel-distance-trigger"
-                    type="button"
-                    className="profile-dropdown-trigger"
-                    aria-haspopup="listbox"
-                    aria-expanded={openMenu === 'travelDistance'}
-                    onClick={() => setOpenMenu((current) => current === 'travelDistance' ? null : 'travelDistance')}
-                  >
-                    {travelDistance}
-                  </button>
-                  {openMenu === 'travelDistance' ? (
-                    <div className="profile-dropdown-menu" role="listbox" aria-labelledby="travel-distance-trigger">
-                      {travelDistanceOptions.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          className={travelDistance === option ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                          onClick={() => {
-                            setTravelDistance(option)
-                            setOpenMenu(null)
-                          }}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="profile-actions">
-                {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : <span />}
-                <Button
-                  className="btn--small profile-save-btn"
-                  onClick={handleSave}
-                  disabled={saving || loading || loadingCategories}
-                >
-                  {saving ? 'Saving...' : 'Save Profile & Preferences'}
-                </Button>
-              </div>
-              {preferenceMessage ? <Text as="p" className="status-active">{preferenceMessage}</Text> : null}
+                </React.Fragment>
+              ))}
             </div>
-          </Card>
-        </section>
+
+            <p className="profile-q">What size events do you prefer? *</p>
+            <div className="segmented" role="radiogroup" aria-label="Event size">
+              {eventSizeShort.map((label, i) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={eventSize === i + 1}
+                  className={eventSize === i + 1 ? 'on' : ''}
+                  onClick={() => setEventSize(i + 1)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="profile-helper">{eventSizeLabels[eventSize - 1]} people</p>
+
+            <p className="profile-q">How far are you willing to travel? *</p>
+            <div className="segmented segmented--3" role="radiogroup" aria-label="Travel distance">
+              {travelDistanceOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={travelDistance === option}
+                  className={travelDistance === option ? 'on' : ''}
+                  onClick={() => setTravelDistance(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="profile-save">
+          {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : null}
+          {preferenceMessage ? <Text as="p" className="status-active">{preferenceMessage}</Text> : null}
+          <Button onClick={handleSave} disabled={saving || busy}>
+            {saving ? 'Saving...' : 'Save changes'}
+          </Button>
+        </div>
       </MainContent>
     </PageWrapper>
   )
