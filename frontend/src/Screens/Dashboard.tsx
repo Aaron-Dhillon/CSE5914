@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import '../styles/dashboard.css'
 import '../styles/chat.css'
 import { PageWrapper, MainContent } from "../components/layout";
-import useEvents from '../hooks/useEvents'
 import { request } from '../services/api'
 import { featuredGroups as fetchFeaturedGroupsApi } from '../services/groups'
 import { useAuthContext } from '../context/AuthContext'
@@ -38,7 +37,6 @@ type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { events } = useEvents()
   const { user } = useAuthContext()
 
   // Featured events state
@@ -51,11 +49,10 @@ const Dashboard: React.FC = () => {
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([
-    { id: 'm1', role: 'assistant', text: 'Ask me for ideas, or pick an event below and I can explain, compare or suggest similar ones.' },
+    { id: 'm1', role: 'assistant', text: 'Ask me what to do this week, or about any event by name. I know your interests and what is coming up near campus.' },
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<string | ''>('')
   const listRef = useRef<HTMLDivElement | null>(null)
   const [firstName, setFirstName] = useState('')
 
@@ -109,7 +106,6 @@ const Dashboard: React.FC = () => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const suggestedEvents = (events || []).map((e: any) => ({ id: e.id, title: e.title }))
 
   const sendMessage = async () => {
     if (!input.trim()) return
@@ -142,9 +138,9 @@ const Dashboard: React.FC = () => {
   }
 
   const quickPrompts = [
-    { icon: '💡', text: 'Why should I go to this event?' },
-    { icon: '⚖️', text: 'How does it compare to other events?' },
-    { icon: '👥', text: 'Who is this event best for?' },
+    { icon: '🗓️', text: "What's happening this weekend?" },
+    { icon: '💸', text: 'Something fun under $30 this week?' },
+    { icon: '🎟️', text: 'Which events match my interests best?' },
   ]
 
   return (
@@ -173,10 +169,6 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="chat-compose">
-                <select value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)} className="input chat-attach" aria-label="Attach an event">
-                  <option value="">No event attached</option>
-                  {suggestedEvents.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
-                </select>
                 <div className="chat-compose-row">
                   <textarea
                     className="input"
