@@ -9,14 +9,25 @@ load_dotenv()
 
 TM_KEY = os.getenv("TICKETMASTER_API_KEY")
 
-CATEGORY_MAP = {
-    "Music":          "night_club",
-    "Sports":         "stadium",
-    "Arts & Theatre": "museum",
-    "Film":           "movie_theater",
-    "Miscellaneous":  "other",
-    "Undefined":      "other",
-}
+# Slugs match the categories table names (lowercased, non-alphanumerics -> "_")
+def map_category(classification: dict) -> str:
+    segment   = (classification.get("segment") or {}).get("name")
+    genre     = (classification.get("genre") or {}).get("name")
+    sub_genre = (classification.get("subGenre") or {}).get("name")
+    if segment == "Music":
+        return "nightlife_djs" if genre in ("Dance/Electronic", "Other", "Undefined", None) else "concerts"
+    if segment == "Sports":
+        return "sports"
+    if segment == "Arts & Theatre":
+        if genre == "Theatre" and sub_genre == "Musical":
+            return "musicals"
+        if genre in ("Theatre", "Dance", "Classical", "Children's Theatre", "Miscellaneous Theatre", "Opera"):
+            return "plays_dance"
+        return "comedy_shows"
+    if segment == "Miscellaneous" and genre in ("Family", "Ice Shows", "Holiday"):
+        return "family_holiday"
+    return "other"
+
 
 def haversine_miles(lat1, lon1, lat2, lon2):
     R = 3958.8
@@ -78,9 +89,7 @@ def map_to_schema(raw: dict, college: dict) -> dict:
     lng = float(location["longitude"]) if location.get("longitude") else None
     distance = haversine_miles(college["lat"], college["lng"], lat, lng) if lat and lng else None
 
-    # Category from Ticketmaster's segment name
-    segment = (raw.get("classifications") or [{}])[0].get("segment", {}).get("name", "Undefined")
-    category = CATEGORY_MAP.get(segment, "other")
+    category = map_category((raw.get("classifications") or [{}])[0])
 
     # Price info
     min_price = price.get("min")
