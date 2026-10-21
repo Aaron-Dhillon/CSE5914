@@ -9,11 +9,13 @@ type Props = {
   loading?: boolean
   /** compact horizontal rows, used for "My groups" */
   compact?: boolean
+  onJoin?: (group: GroupItem) => void
+  joinStates?: Record<string, 'none' | 'busy' | 'joined' | 'requested'>
 }
 
 import GroupSkeleton from './GroupSkeleton'
 
-const GroupGrid: React.FC<Props> = ({ groups, onGroupClick, loading = false, compact = false }) => {
+const GroupGrid: React.FC<Props> = ({ groups, onGroupClick, loading = false, compact = false, onJoin, joinStates = {} }) => {
   if (loading) {
     return (
       <section className="groups-grid" aria-busy="true">
@@ -26,7 +28,7 @@ const GroupGrid: React.FC<Props> = ({ groups, onGroupClick, loading = false, com
 
   return (
     <section className={compact ? 'group-rows' : 'groups-grid'}>
-      {groups.map((g) => <GroupCard key={g.id} group={g} onView={onGroupClick} compact={compact} />)}
+      {groups.map((g) => <GroupCard key={g.id} group={g} onView={onGroupClick} compact={compact} onJoin={onJoin} joinState={joinStates[g.id]} />)}
     </section>
   )
 }

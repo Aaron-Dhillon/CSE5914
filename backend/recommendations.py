@@ -2,18 +2,10 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from openai import OpenAI
 from utils.sql_helper import SQLHelper
 import os, json
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from utils.auth_dependency import get_current_user
 
-user = os.getenv("DB_USER")
-password = os.getenv("PASSWORD")
-host = os.getenv("HOST")
-port = os.getenv("PORT")
-db_name = os.getenv("DB_NAME")
-
-DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require"
-
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"options": "-c statement_timeout=30000"}, execution_options={"no_parameters": True}, pool_size=20, max_overflow=0)
+from utils.db import engine
 
 db_helper = SQLHelper()
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])

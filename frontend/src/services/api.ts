@@ -29,7 +29,8 @@ export async function request(path: string, opts: RequestOptions = {}) {
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
-    const message = data && data.message ? data.message : res.statusText
+    // FastAPI's HTTPException sends { detail }, our JSONResponses send { message }
+    const message = data?.message || (typeof data?.detail === 'string' ? data.detail : '') || res.statusText
     const err: any = new Error(message)
     err.status = res.status
     err.data = data

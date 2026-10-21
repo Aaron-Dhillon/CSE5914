@@ -1,33 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine
 from utils.sql_helper import SQLHelper
-from dotenv import load_dotenv
+from utils.db import engine
+from utils.auth_dependency import get_current_user
 from pydantic import BaseModel
-import os
-
-load_dotenv('.env')
-
-database_url = (
-    f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('PASSWORD')}"
-    f"@{os.getenv('HOST')}:{os.getenv('PORT')}/{os.getenv('DB_NAME')}?sslmode=require"
-)
-engine = create_engine(database_url, pool_pre_ping=True, connect_args={"options": "-c statement_timeout=30000"}, execution_options={"no_parameters": True}, pool_size=20, max_overflow=0)
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
 
 class CategoryPreferenceUpdate(BaseModel):
-    user_id: str
+    user_id: str | None = None  # ignored: the login token decides whose preferences these are
     category_ids: list[str | int]
 
 class UserPreferencesUpdate(BaseModel):
-    user_id: str
+    user_id: str | None = None  # ignored: the login token decides whose preferences these are
     event_size: str
     event_distance: int
     event_times: list[int] = []
 
 @router.get("/categories")
-async def get_category_preferences(user_id: str):
+async def get_category_preferences(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
     sql_helper = SQLHelper()
 
     try:
@@ -46,7 +38,8 @@ async def get_category_preferences(user_id: str):
     return {"category_ids": category_ids}
 
 @router.get("")
-async def get_user_preferences(user_id: str):
+async def get_user_preferences(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
     sql_helper = SQLHelper()
 
     try:
@@ -87,7 +80,8 @@ async def get_user_preferences(user_id: str):
     }
 
 @router.put("/categories")
-async def update_category_preferences(payload: CategoryPreferenceUpdate):
+async def update_category_preferences(payload: CategoryPreferenceUpdate, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
     sql_helper = SQLHelper()
 
     try:
@@ -96,12 +90,12 @@ async def update_category_preferences(payload: CategoryPreferenceUpdate):
 
         with engine.connect() as connection:
             connection.execute(delete_query, {
-                'user_id': payload.user_id,
+                'user_id': user_id,
             })
 
             for category_id in payload.category_ids:
                 connection.execute(insert_query, {
-                    'user_id': payload.user_id,
+                    'user_id': user_id,
                     'category_id': category_id,
                 })
 
@@ -115,7 +109,8 @@ async def update_category_preferences(payload: CategoryPreferenceUpdate):
     return {"message": "Category preferences saved."}
 
 @router.put("")
-async def update_user_preferences(payload: UserPreferencesUpdate):
+async def update_user_preferences(payload: UserPreferencesUpdate, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
     sql_helper = SQLHelper()
 
     try:
@@ -125,18 +120,18 @@ async def update_user_preferences(payload: UserPreferencesUpdate):
 
         with engine.connect() as connection:
             connection.execute(query, {
-                'user_id': payload.user_id,
+                'user_id': user_id,
                 'event_size': payload.event_size,
                 'event_distance': payload.event_distance,
             })
 
             connection.execute(delete_time_query, {
-                'user_id': payload.user_id,
+                'user_id': user_id,
             })
 
             for event_time in payload.event_times:
                 connection.execute(insert_time_query, {
-                    'user_id': payload.user_id,
+                    'user_id': user_id,
                     'event_time': event_time,
                 })
 

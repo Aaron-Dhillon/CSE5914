@@ -21,7 +21,7 @@ class Data(BaseModel):
     password: str
 
 class ProfileUpdate(BaseModel):
-    id: str
+    id: str | None = None  # ignored: the login token decides whose profile this is
     display_name: str
     birth_date: str | None = None
     graduation_year: int | None = None
@@ -240,7 +240,10 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     
 
 @router.get("/profile")
-async def get_profile(id: str):
+async def get_profile(id: str, current_user: dict = Depends(get_current_user)):
+    # Full profile (email, birth date) is private; others use /follow/{username}/publicProfile
+    if id != current_user["user_id"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own full profile")
     sql_helper = SQLHelper()
 
     try:
@@ -265,14 +268,14 @@ async def get_profile(id: str):
     return dict(user)
 
 @router.put("/profile")
-async def update_profile(profile: ProfileUpdate):
+async def update_profile(profile: ProfileUpdate, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
 
     try:
         query = sql_helper.load_query("sql_queries/update_user_profile.sql")
         with engine.connect() as connection:
             result = connection.execute(query, {
-                'id': profile.id,
+                'id': current_user["user_id"],
                 'display_name': profile.display_name,
                 'birth_date': profile.birth_date,
                 'graduation_year': profile.graduation_year,

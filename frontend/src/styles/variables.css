@@ -76,5 +76,5 @@
   --font-display: "Barlow Condensed", Inter, sans-serif;
   color-scheme: dark;
   /* Brutus glove; hotspot is the fingertip */
-  --cursor-hand: url('/glove.svg') 13 2, pointer;
+  --cursor-hand: url('/glove.svg') 14 3, pointer;
 }
