@@ -1,6 +1,5 @@
 export { default as GroupCard } from './GroupCard'
 export { default as GroupGrid } from './GroupGrid'
 export type { GroupItem } from './GroupCard'
-export { default as GroupHero } from './GroupHero'
 export { default as GroupFilters } from './GroupFilters'
 export { default as GroupSkeleton } from './GroupSkeleton'

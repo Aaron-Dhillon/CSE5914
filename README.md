@@ -52,9 +52,9 @@ You need [uv](https://docs.astral.sh/uv/getting-started/installation/) and Node.
    - `backend/.env`
      - Database: `DB_USER`, `PASSWORD`, `HOST`, `PORT`, `DB_NAME` (use Supabase's **Session pooler** connection)
      - Supabase: `SUPABASE_URL`, `SUPABASE_KEY`
-     - Auth: `JWT_SECRET`, `ENCRYPTION_KEY`
+     - Auth: `JWT_SECRET` (random, 32+ characters; the API won't start without it), `ENCRYPTION_KEY`
      - Email (verification): `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_PORT`, `MAIL_SERVER`, `MAIL_FROM_NAME`
-     - APIs: `TICKETMASTER_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_PLACES_API_KEY` (optional)
+     - APIs: `TICKETMASTER_API_KEY`, `OPENAI_API_KEY`
      - `WEBSITE_URL` (where the frontend runs, e.g. `http://localhost:5173`)
    - `frontend/.env.local`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 3. **Start the backend** (port 8000):
@@ -76,8 +76,7 @@ To run only the frontend against the live API instead, add `VITE_WEBSITE_URL=htt
 - **Automatic:** `.github/workflows/sync-events.yml` runs it every day at 5am Columbus time. It uses these repo secrets: `TICKETMASTER_API_KEY`, `DB_USER`, `PASSWORD`, `HOST`, `PORT`, `DB_NAME`.
 - **Manual:** GitHub → **Actions** → **Sync Ticketmaster events** → **Run workflow**, or locally:
   ```bash
-  python backend/utils/sync_events.py           # Ticketmaster only
-  python backend/utils/sync_events.py --places  # also Google Places (billed API)
+  python backend/utils/sync_events.py
   ```
 - GitHub pauses scheduled workflows after 60 days without commits. Re-enable it from the Actions tab if that happens.
 
@@ -91,7 +90,7 @@ Events use 8 categories built around Ticketmaster's data: **Concerts, Nightlife 
 api/            Vercel entry point for the FastAPI app
 backend/        FastAPI routers (events, groups, accounts, chat, preferences)
   sql_queries/  SQL used by the routers
-  utils/        DB, auth, Ticketmaster and Google Places helpers, event sync
+  utils/        DB, auth, rate limits, Ticketmaster sync
   migrations/   One-off SQL migrations
 frontend/       React app
   src/Screens/  Pages

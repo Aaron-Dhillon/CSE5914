@@ -2,7 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
-from utils.crypto import CryptoManager
+from utils.crypto import CryptoManager, hash_password, verify_password
+from utils import rate_limit
 from utils.jwt_helper import create_token
 from utils.auth_dependency import get_current_user
 from supabase import create_client, Client
@@ -60,8 +61,8 @@ router = APIRouter(prefix="/account", tags=["account"])
 async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     sql_helper = SQLHelper()
-    encrypted_password = crypto_manager.hash_data(data.password.encode())
     email = data.email.strip().lower()
+    encrypted_password = hash_password(data.password)
 
     if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
@@ -191,13 +192,16 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
     background_tasks.add_task(fm.send_message, message)
     return {"message": "Account created. Please check your email to verify your account."}
 
+# Failed sign-ins allowed per email: (max, window in seconds), shortest window first
+LOGIN_LIMITS = [(5, 5 * 60), (10, 60 * 60)]
+
 @router.post("/login")
 async def login(data: Data):
     sql_helper = SQLHelper()
-    crypto_manager = CryptoManager()
-    user_email = data.email
-    hashed_password = crypto_manager.hash_data(data.password.encode())
-    
+    user_email = data.email.strip().lower()
+    limit_key = f"login:{user_email}"
+    rate_limit.check(limit_key, LOGIN_LIMITS, "failed sign-in attempts")
+
     query = sql_helper.load_query("sql_queries/login.sql")
     with engine.connect() as connection:
         result = connection.execute(query, {
@@ -205,18 +209,19 @@ async def login(data: Data):
         })
         user = result.mappings().fetchone()
 
-    if user is None:
-        print("failed")
+    ok, needs_upgrade = verify_password(data.password, user['password']) if user else (False, False)
+    if not ok:
+        rate_limit.record(limit_key)
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"message": "Username or password incorrect"}
         )
-    if user['password'] != hashed_password:
-        print("wrong password")
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"message": "Username or password incorrect"}
-        )
+    rate_limit.clear(limit_key)
+    if needs_upgrade:
+        # Re-hash old unsalted passwords now that we know the plain text
+        with engine.connect() as connection:
+            connection.execute(text("UPDATE profiles SET password = :pw WHERE id = :id"), {'pw': hash_password(data.password), 'id': user['id']})
+            connection.commit()
     if not user['verified']:
         print("Not Verified")
         return JSONResponse(

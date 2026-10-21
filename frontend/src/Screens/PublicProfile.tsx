@@ -23,7 +23,7 @@ type PublicUser = {
 }
 
 const PublicProfile: React.FC = () => {
-  const { username } = useParams()
+  const { userRef } = useParams()
   const navigate = useNavigate()
   const { user } = useAuthContext()
   const [loading, setLoading] = useState(true)
@@ -39,11 +39,11 @@ const PublicProfile: React.FC = () => {
       setLoading(true)
       setError(null)
       try {
-        if (!username) throw new Error('No username provided')
-        const name = encodeURIComponent(username)
+        if (!userRef) throw new Error('No user provided')
+        const ref = encodeURIComponent(userRef)
         const [data, followData] = await Promise.all([
-          request(`/follow/${name}/publicProfile`),
-          request(`/follow/${name}/isFollowing`).catch(() => ({ following: false })),
+          request(`/follow/${ref}/publicProfile`),
+          request(`/follow/${ref}/isFollowing`).catch(() => ({ following: false })),
         ])
         if (!mounted) return
         const interests = typeof data.interests === 'string' ? JSON.parse(data.interests || '[]') : (data.interests || [])
@@ -65,14 +65,13 @@ const PublicProfile: React.FC = () => {
     }
     load()
     return () => { mounted = false }
-  }, [username])
+  }, [userRef])
 
   async function handleFollow() {
-    if (!username || followLoading) return
+    if (!userData || followLoading) return
     setFollowLoading(true)
     try {
-      const name = encodeURIComponent(username)
-      await request(`/follow/${name}`, { method: following ? 'DELETE' : 'POST' })
+      await request(`/follow/${userData.id}`, { method: following ? 'DELETE' : 'POST' })
       setUserData((u) => u ? { ...u, followers: u.followers + (following ? -1 : 1) } : u)
       setFollowing(!following)
     } catch (e: any) {

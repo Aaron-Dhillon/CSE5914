@@ -464,7 +464,7 @@ const GroupDetail: React.FC = () => {
                           <div className="avatar-sm" aria-hidden="true">{(jr.display_name || jr.email || '?').charAt(0).toUpperCase()}</div>
                           <div className="list-row-main">
                             {jr.display_name ? (
-                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${encodeURIComponent(jr.display_name!)}`)}>
+                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${jr.user_id}`)}>
                                 {jr.display_name}
                               </button>
                             ) : (
@@ -491,7 +491,7 @@ const GroupDetail: React.FC = () => {
                           <div className="avatar-sm" aria-hidden="true">{(m.display_name || m.email || '?').charAt(0).toUpperCase()}</div>
                           <div className="list-row-main">
                             {m.display_name ? (
-                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${encodeURIComponent(m.display_name!)}`)}>
+                              <button type="button" className="name-link" onClick={() => navigate(`/profile/${m.user_id}`)}>
                                 {m.display_name}
                               </button>
                             ) : (

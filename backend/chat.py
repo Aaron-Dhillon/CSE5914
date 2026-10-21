@@ -7,11 +7,9 @@ from datetime import datetime, timezone, timedelta
 import os
 import re
 import json
-import math
-import time
-from collections import defaultdict, deque
 from datetime import date
 from utils.auth_dependency import get_current_user
+from utils import rate_limit
 
 router = APIRouter()
 
@@ -30,23 +28,10 @@ class ChatRequest(BaseModel):
 
 # Per-user chat limits: (max messages, window in seconds), shortest window first
 CHAT_LIMITS = [(15, 5 * 60), (25, 10 * 60), (40, 60 * 60)]
-# shortcut: kept in memory, so each serverless instance counts separately; move to a DB table if abused
-_chat_log: dict[str, deque] = defaultdict(deque)
 
 def check_chat_limit(user_id: str) -> None:
-    now = time.time()
-    log = _chat_log[user_id]
-    while log and now - log[0] > CHAT_LIMITS[-1][1]:
-        log.popleft()
-    for limit, window in CHAT_LIMITS:
-        recent = [t for t in log if now - t <= window]
-        if len(recent) >= limit:
-            wait_min = max(1, math.ceil((recent[0] + window - now) / 60))
-            raise HTTPException(
-                status_code=429,
-                detail=f"You've hit the chat limit ({limit} messages per {window // 60} minutes). Try again in {wait_min} minute{'s' if wait_min != 1 else ''}.",
-            )
-    log.append(now)
+    rate_limit.check(f"chat:{user_id}", CHAT_LIMITS, "chat messages")
+    rate_limit.record(f"chat:{user_id}")
 
 def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     ohio_offset = timedelta(hours=-4)

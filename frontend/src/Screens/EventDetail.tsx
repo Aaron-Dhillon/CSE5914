@@ -163,7 +163,7 @@ const EventDetail: React.FC = () => {
                     <>
                       <dt>Hosted by</dt>
                       <dd>
-                        <button type="button" className="shelf-link" onClick={() => navigate(`/profile/${encodeURIComponent(event.createdBy || '')}`)}>
+                        <button type="button" className="shelf-link" onClick={() => navigate(`/profile/${event.createdById || encodeURIComponent(event.createdBy || '')}`)}>
                           {event.createdBy}
                         </button>
                       </dd>

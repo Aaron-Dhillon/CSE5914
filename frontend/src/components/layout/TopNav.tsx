@@ -52,11 +52,6 @@ const TopNav: React.FC = () => {
                   className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Groups</NavLink>
               </li>
-              {/*
-              <li>
-                <NavLink ...>Chat</NavLink>
-              </li>
-              */}
               <li>
                 <NavLink
                   to="/profile"

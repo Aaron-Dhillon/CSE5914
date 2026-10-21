@@ -3,6 +3,9 @@ import os
 from datetime import datetime, timedelta, timezone
 
 JWT_SECRET = os.getenv("JWT_SECRET", "")
+# An empty secret would let anyone sign their own login tokens
+if len(JWT_SECRET) < 32:
+    raise RuntimeError("JWT_SECRET must be set to a random string of at least 32 characters")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_HOURS = 24
 

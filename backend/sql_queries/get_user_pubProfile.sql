@@ -12,5 +12,5 @@ SELECT
 FROM profiles p
 LEFT JOIN user_preferences_categories upc ON upc.user_id = p.id
 LEFT JOIN categories c ON c.id = upc.category_id
-WHERE p.display_name = :username
+WHERE p.id = :user_id
 GROUP BY p.id, p.display_name, p.bio, p.major, p.graduation_year, p.has_car, p.verified;

@@ -1,6 +1,3 @@
 export { default as PageWrapper } from './PageWrapper'
-export { default as Header } from './Header'
-export { default as Sidebar } from './Sidebar'
 export { default as MainContent } from './MainContent'
 export { default as TopNav } from './TopNav'
-export { default as MobileNav } from './MobileNav'
