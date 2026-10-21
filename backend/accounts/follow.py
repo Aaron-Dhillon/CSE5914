@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from utils.sql_helper import SQLHelper
@@ -11,9 +12,24 @@ from utils.db import engine
 
 router = APIRouter(prefix="/follow", tags=["follow"])
 
+_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
-@router.get("/{username}/publicProfile")
-async def get_public_profile(username: str):
+
+def resolve_user_id(ref: str) -> str:
+    """Profiles are addressed by user id. Old links used display names (not unique), so those still
+    resolve, but only when exactly one person has that name."""
+    if _UUID.match(ref):
+        return ref
+    with engine.connect() as connection:
+        rows = connection.execute(text("SELECT id FROM profiles WHERE display_name = :name LIMIT 2"), {"name": ref}).fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return str(rows[0][0])
+
+
+@router.get("/{user_ref}/publicProfile")
+async def get_public_profile(user_ref: str):
+    user_id = resolve_user_id(user_ref)
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/get_user_pubProfile.sql")
@@ -22,7 +38,7 @@ async def get_public_profile(username: str):
 
     try:
         with engine.connect() as connection:
-            result = connection.execute(query, { 'username': username })
+            result = connection.execute(query, { 'user_id': user_id })
             row = result.mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
@@ -44,17 +60,18 @@ async def get_public_profile(username: str):
     }
 
 
-@router.get("/{username}/isFollowing")
-async def is_following(username: str, current_user: dict = Depends(get_current_user)):
+@router.get("/{user_ref}/isFollowing")
+async def is_following(user_ref: str, current_user: dict = Depends(get_current_user)):
+    user_id = resolve_user_id(user_ref)
     try:
         with engine.connect() as connection:
             result = connection.execute(text("""
                 SELECT 1 FROM follows
                 WHERE follower_id = :follower_id
-                AND following_id = (SELECT id FROM profiles WHERE display_name = :username)
+                AND following_id = :following_id
             """), {
                 'follower_id': current_user["user_id"],
-                'username': username
+                'following_id': user_id
             })
             row = result.fetchone()
     except Exception as e:
@@ -99,25 +116,29 @@ async def get_following(user_id: str):
     return [{"display_name": name} for name in following]
 
 
-@router.delete("/{username}")
-async def unfollow_user(username: str, current_user: dict = Depends(get_current_user)):
+@router.delete("/{user_ref}")
+async def unfollow_user(user_ref: str, current_user: dict = Depends(get_current_user)):
+    user_id = resolve_user_id(user_ref)
     sql_helper = SQLHelper()
     try:
         with engine.connect() as connection:
             query = sql_helper.load_query("sql_queries/unfollow_user.sql")
             connection.execute(query, {
                 'follower_id': current_user["user_id"],
-                'followed_username': username
+                'following_id': user_id
             })
             connection.commit()
     except Exception as e:
         print(f"UNFOLLOW ERROR: {type(e).__name__}: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    return {"message": f"You have unfollowed {username}"}
+    return {"message": "Unfollowed"}
 
-@router.post("/{username}")
-async def follow_user(username: str, current_user: dict = Depends(get_current_user)):
+@router.post("/{user_ref}")
+async def follow_user(user_ref: str, current_user: dict = Depends(get_current_user)):
+    user_id = resolve_user_id(user_ref)
+    if user_id == current_user["user_id"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't follow yourself")
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/follow_user.sql")
@@ -128,10 +149,10 @@ async def follow_user(username: str, current_user: dict = Depends(get_current_us
         with engine.connect() as connection:
             connection.execute(query, {
                 'follower_id': current_user["user_id"],
-                'followed_username': username
+                'following_id': user_id
             })
             connection.commit()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
-    return {"message": f"You are now following {username}"}
+    return {"message": "Following"}

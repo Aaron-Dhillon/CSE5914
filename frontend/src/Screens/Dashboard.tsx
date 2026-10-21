@@ -32,10 +32,6 @@ interface FeaturedGroup {
   image_url: string | null;
 }
 
-const sampleEvents = [
-  { id: 'e1', title: 'Campus Study Group', date: new Date().toISOString(), location: 'The Union', description: 'Quick study meet to prep for exams.', thumbnail: '/block.jpg' },
-  { id: 'e2', title: 'Hackathon Info Session', date: new Date().toISOString(), location: 'STEM Hall', description: 'Intro to the upcoming hackathon.', thumbnail: '/block.jpg' }
-]
 
 type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string }
 
@@ -53,7 +49,7 @@ const Dashboard: React.FC = () => {
   const [featuredGroups, setFeaturedGroups] = useState<FeaturedGroup[]>([])
   const [featuredGroupsLoading, setFeaturedGroupsLoading] = useState(false)
 
-  // Chat state (inlined from Chat.tsx)
+  // Chat state
   const [messages, setMessages] = useState<Message[]>([
     { id: 'm1', role: 'assistant', text: 'Ask me for ideas, or pick an event below and I can explain, compare or suggest similar ones.' },
   ])
@@ -113,9 +109,7 @@ const Dashboard: React.FC = () => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const suggestedEvents = (events && events.length > 0)
-    ? events.map((e: any) => ({ id: e.id, title: e.title }))
-    : sampleEvents.map(ev => ({ id: ev.id, title: ev.title }))
+  const suggestedEvents = (events || []).map((e: any) => ({ id: e.id, title: e.title }))
 
   const sendMessage = async () => {
     if (!input.trim()) return

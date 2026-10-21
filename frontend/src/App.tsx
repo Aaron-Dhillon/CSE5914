@@ -17,7 +17,6 @@ const GroupsPage = lazy(() => import('./Screens/GroupsPage'))
 const CreateGroup = lazy(() => import('./Screens/CreateGroup'))
 const Profile = lazy(() => import('./Screens/Profile'))
 const PublicProfile = lazy(() => import('./Screens/PublicProfile'))
-const Chat = lazy(() => import('./Screens/Chat'))
 const EventDetail = lazy(() => import('./Screens/EventDetail'))
 const GroupDetail = lazy(() => import('./Screens/GroupDetail'))
 
@@ -43,9 +42,8 @@ function AppRoutes() {
         <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
         <Route path="/groups/create" element={<ProtectedRoute><CreateGroup /></ProtectedRoute>} />
         <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
-        <Route path="/profile/:username" element={<PublicProfile />} />
+        <Route path="/profile/:userRef" element={<PublicProfile />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       </Routes>
       </Suspense>
     </>
