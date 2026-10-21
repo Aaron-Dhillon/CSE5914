@@ -7,7 +7,11 @@ from datetime import datetime, timezone, timedelta
 import os
 import re
 import json
+import math
+import time
+from collections import defaultdict, deque
 from datetime import date
+from utils.auth_dependency import get_current_user
 
 router = APIRouter()
 
@@ -22,7 +26,27 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     history: List[Message]
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None  # ignored: the login token decides who is chatting
+
+# Per-user chat limits: (max messages, window in seconds)
+CHAT_LIMITS = [(25, 10 * 60), (40, 60 * 60)]
+# shortcut: kept in memory, so each serverless instance counts separately; move to a DB table if abused
+_chat_log: dict[str, deque] = defaultdict(deque)
+
+def check_chat_limit(user_id: str) -> None:
+    now = time.time()
+    log = _chat_log[user_id]
+    while log and now - log[0] > CHAT_LIMITS[-1][1]:
+        log.popleft()
+    for limit, window in CHAT_LIMITS:
+        recent = [t for t in log if now - t <= window]
+        if len(recent) >= limit:
+            wait_min = max(1, math.ceil((recent[0] + window - now) / 60))
+            raise HTTPException(
+                status_code=429,
+                detail=f"You've hit the chat limit ({limit} messages per {window // 60} minutes). Try again in {wait_min} minute{'s' if wait_min != 1 else ''}.",
+            )
+    log.append(now)
 
 def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     ohio_offset = timedelta(hours=-4)
@@ -135,10 +159,12 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
 
 
 @router.post("/basic")
-async def basic_chat(req: ChatRequest):
+async def basic_chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    check_chat_limit(user_id)
     try:
         supabase = get_supabase()
-        event_context = fetch_event_context(req.user_id, supabase)
+        event_context = fetch_event_context(user_id, supabase)
 
         system_prompt = f"""You are a helpful event assistant for Ohio State University students.
 Keep answers friendly and concise. Use the event data below to answer questions.
@@ -168,8 +194,10 @@ Description
 {event_context}"""
 
         openai_messages = [{"role": "system", "content": system_prompt}]
-        for m in req.history:
-            openai_messages.append({"role": m.role, "content": m.content})
+        # Only user/assistant turns from the browser (no injected system messages), capped in count and length
+        for m in req.history[-10:]:
+            if m.role in ("user", "assistant"):
+                openai_messages.append({"role": m.role, "content": m.content[:2000]})
 
         response = client.chat.completions.create(
             model="gpt-5.4-mini",
@@ -183,7 +211,9 @@ Description
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/top-recommendations/{user_id}")
-async def get_top_recommendations(user_id: str):
+async def get_top_recommendations(user_id: str, current_user: dict = Depends(get_current_user)):
+    if user_id != current_user["user_id"]:
+        raise HTTPException(status_code=403, detail="You can only see your own recommendations")
     try:
         supabase = get_supabase()
 

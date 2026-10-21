@@ -21,6 +21,23 @@ const GroupsPage: React.FC = () => {
   const [myGroups, setMyGroups] = useState<GroupItem[]>([])
   const [myGroupsLoading, setMyGroupsLoading] = useState(false)
 
+  const [reloadMine, setReloadMine] = useState(0)
+  const [joinStates, setJoinStates] = useState<Record<string, 'none' | 'busy' | 'joined' | 'requested'>>({})
+
+  const handleJoin = async (g: GroupItem) => {
+    setJoinStates((s) => ({ ...s, [g.id]: 'busy' }))
+    try {
+      await groupsService.joinGroup(g.id)
+      setJoinStates((s) => ({ ...s, [g.id]: g.join_policy === 'approval' ? 'requested' : 'joined' }))
+      if (g.join_policy !== 'approval') setReloadMine((n) => n + 1)
+    } catch (e: any) {
+      // the API answers 400 when a request is already pending
+      const pending = /pending/i.test(e?.message || '')
+      setJoinStates((s) => ({ ...s, [g.id]: pending ? 'requested' : 'none' }))
+      if (!pending) alert(e?.message || 'Could not join this group.')
+    }
+  }
+
   useEffect(() => {
     if (!user?.user_id) return
     let mounted = true
@@ -46,7 +63,7 @@ const GroupsPage: React.FC = () => {
     }
     loadMyGroups()
     return () => { mounted = false }
-  }, [user])
+  }, [user, reloadMine])
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -104,7 +121,13 @@ const GroupsPage: React.FC = () => {
 
         <section className="shelf">
           <div className="shelf-h"><h2>All groups</h2></div>
-          <GroupGrid groups={paginated} loading={loading} onGroupClick={handleGroupClick} />
+          <GroupGrid
+            groups={paginated}
+            loading={loading}
+            onGroupClick={handleGroupClick}
+            onJoin={user ? handleJoin : undefined}
+            joinStates={{ ...Object.fromEntries(myGroups.map((g) => [g.id, 'joined' as const])), ...joinStates }}
+          />
         </section>
 
         <div className="pager">

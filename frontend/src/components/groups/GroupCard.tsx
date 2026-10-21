@@ -17,6 +17,9 @@ type Props = {
   group: GroupItem
   onView?: (id: string) => void
   compact?: boolean
+  /** shows a working Join/Request button when given */
+  onJoin?: (group: GroupItem) => void
+  joinState?: 'none' | 'busy' | 'joined' | 'requested'
 }
 
 const COVERS = [
@@ -35,7 +38,7 @@ export function groupCover(id: string) {
   return COVERS[Math.abs(h) % COVERS.length]
 }
 
-const GroupCard: React.FC<Props> = ({ group, onView, compact = false }) => {
+const GroupCard: React.FC<Props> = ({ group, onView, compact = false, onJoin, joinState = 'none' }) => {
   const { id, name, members, description, thumbnail, join_policy } = group
   const open = () => onView?.(id)
   const policy = join_policy === 'approval' ? 'Approval needed' : 'Open'
@@ -74,7 +77,21 @@ const GroupCard: React.FC<Props> = ({ group, onView, compact = false }) => {
         {description ? <p className="group-desc">{description}</p> : null}
         <div className="group-foot">
           <span>{members} {members === 1 ? 'member' : 'members'}</span>
-          <span className={`group-cta ${join_policy === 'approval' ? 'group-cta--req' : ''}`}>{join_policy === 'approval' ? 'Request' : 'Join'}</span>
+          {onJoin ? (
+            joinState === 'joined' || joinState === 'requested' ? (
+              <span className="group-cta group-cta--done">{joinState === 'joined' ? 'Joined ✓' : 'Requested'}</span>
+            ) : (
+              <button
+                type="button"
+                className={`group-cta ${join_policy === 'approval' ? 'group-cta--req' : ''}`}
+                disabled={joinState === 'busy'}
+                onClick={(e) => { e.stopPropagation(); onJoin(group) }}
+                onKeyDown={(e) => e.stopPropagation()}
+              >
+                {joinState === 'busy' ? '…' : join_policy === 'approval' ? 'Request' : 'Join'}
+              </button>
+            )
+          ) : null}
         </div>
       </div>
     </AnimatedCard>

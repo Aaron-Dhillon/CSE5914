@@ -134,13 +134,14 @@ const Dashboard: React.FC = () => {
     try {
       const response = await request('/chat/basic', {
         method: 'POST',
-        body: { history: historyToSend, user_id: user?.user_id ?? null }
+        body: { history: historyToSend }
       })
 
       setMessages((prev) => prev.map((x) => (x.id === loadingId ? { ...x, text: response.reply } : x)))
     } catch (error) {
       console.error("Chat API Error:", error)
-      setMessages((prev) => prev.map((x) => (x.id === loadingId ? { ...x, text: "Sorry, I'm having trouble connecting." } : x)))
+      const text = (error as any)?.status === 429 ? (error as any).message : "Sorry, I'm having trouble connecting."
+      setMessages((prev) => prev.map((x) => (x.id === loadingId ? { ...x, text } : x)))
     } finally {
       setLoading(false)
     }

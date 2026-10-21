@@ -1,22 +1,25 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./Screens/Home";
 import Login from "./Screens/Login";
 import CreateAccount from "./Screens/CreateAccount";
-import Verify from './Screens/Verify';
-import Dashboard from "./Screens/Dashboard";
-import EventsPage from "./Screens/EventsPage";
-import AllEventsPage from "./Screens/AllEventsPage";
-import CreateEvent from './Screens/CreateEvent'
-import GroupsPage from "./Screens/GroupsPage";
-import CreateGroup from './Screens/CreateGroup'
-import Profile from "./Screens/Profile";
-import PublicProfile from "./Screens/PublicProfile";
-import Chat from './Screens/Chat'
-import EventDetail from './Screens/EventDetail'
-import GroupDetail from './Screens/GroupDetail'
 import { TopNav } from './components/layout'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+
+// Each page's code loads only when it's opened; Home, Login and sign-up stay in the first bundle
+const Verify = lazy(() => import('./Screens/Verify'))
+const Dashboard = lazy(() => import('./Screens/Dashboard'))
+const EventsPage = lazy(() => import('./Screens/EventsPage'))
+const AllEventsPage = lazy(() => import('./Screens/AllEventsPage'))
+const CreateEvent = lazy(() => import('./Screens/CreateEvent'))
+const GroupsPage = lazy(() => import('./Screens/GroupsPage'))
+const CreateGroup = lazy(() => import('./Screens/CreateGroup'))
+const Profile = lazy(() => import('./Screens/Profile'))
+const PublicProfile = lazy(() => import('./Screens/PublicProfile'))
+const Chat = lazy(() => import('./Screens/Chat'))
+const EventDetail = lazy(() => import('./Screens/EventDetail'))
+const GroupDetail = lazy(() => import('./Screens/GroupDetail'))
 
 function AppRoutes() {
   const location = useLocation()
@@ -26,6 +29,7 @@ function AppRoutes() {
     <>
       {!hideTop && <TopNav />}
 
+      <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -43,6 +47,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       </Routes>
+      </Suspense>
     </>
   )
 }

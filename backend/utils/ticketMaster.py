@@ -66,6 +66,25 @@ def fetch_all_events(college_key="ohio_state", radius=30):
     return all_events
 
 
+def pick_image(images: list) -> str | None:
+    """~1024px 16:9 poster (~100 KB) instead of the full-size original (~600 KB)."""
+    if not images:
+        return None
+    wide = [i for i in images if i.get("ratio") == "16_9" and i.get("width")]
+    if wide:
+        return min(wide, key=lambda i: abs(i["width"] - 1024))["url"]
+    return max(images, key=lambda i: i.get("width", 0)).get("url")
+
+
+assert pick_image([
+    {"url": "big", "ratio": "16_9", "width": 2048},
+    {"url": "mid", "ratio": "16_9", "width": 1024},
+    {"url": "tall", "ratio": "3_2", "width": 1100},
+]) == "mid"
+assert pick_image([{"url": "only", "width": 300}]) == "only"
+assert pick_image([]) is None
+
+
 def map_to_schema(raw: dict, college: dict) -> dict:
     venue      = (raw.get("_embedded") or {}).get("venues", [{}])[0]
     location   = venue.get("location") or {}
@@ -73,7 +92,7 @@ def map_to_schema(raw: dict, college: dict) -> dict:
     city_info  = venue.get("city") or {}
     state_info = venue.get("state") or {}
     images     = raw.get("images") or []
-    image_url  = max(images, key=lambda i: i.get("width", 0)).get("url") if images else None
+    image_url  = pick_image(images)
     start      = raw.get("dates", {}).get("start", {})
     end        = raw.get("dates", {}).get("end", {})
     prices     = raw.get("priceRanges") or []
