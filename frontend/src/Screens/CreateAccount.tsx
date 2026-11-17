@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth"
 import { PageWrapper, MainContent } from "../components/layout"
 import { Card, Heading, Input, Button, Text } from "../components/ui"
@@ -63,6 +63,10 @@ const CreateAccount: React.FC = () => {
                 <Button onClick={handleSignUp} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</Button>
 
                 {error ? <Text as="p" className="error-text">{error}</Text> : null}
+
+                <p className="muted" style={{ fontSize: 13, margin: 0 }}>
+                  By creating an account you agree to our <Link to="/privacy">privacy policy</Link>, including that the event assistant uses AI from OpenAI.
+                </p>
 
                 <p className="auth-switch">
                   Already have an account? <button type="button" className="shelf-link" onClick={() => navigate("/login")}>Sign in</button>

@@ -8,4 +8,4 @@ remove_attendees AS (
 )
 DELETE FROM events
 WHERE id IN (SELECT id FROM check_owner)
-RETURNING id;
+RETURNING id, image_url;

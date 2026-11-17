@@ -11,6 +11,7 @@ import os
 load_dotenv('.env')
 
 from utils.db import engine
+from utils.storage import delete_uploaded_image
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -331,7 +332,7 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
 
 
 @router.delete("/{event_id}")
-async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_event(event_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/delete_event.sql")
@@ -348,6 +349,7 @@ async def delete_event(event_id: str, current_user: dict = Depends(get_current_u
     if not row:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Event not found or you are not the creator")
 
+    background_tasks.add_task(delete_uploaded_image, row["image_url"])
     return {"message": "Event deleted"}
 
 @router.get("/{user_id}/event")
