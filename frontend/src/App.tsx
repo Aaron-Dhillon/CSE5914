@@ -19,6 +19,7 @@ const Profile = lazy(() => import('./Screens/Profile'))
 const PublicProfile = lazy(() => import('./Screens/PublicProfile'))
 const EventDetail = lazy(() => import('./Screens/EventDetail'))
 const GroupDetail = lazy(() => import('./Screens/GroupDetail'))
+const Privacy = lazy(() => import('./Screens/Privacy'))
 
 function AppRoutes() {
   const location = useLocation()
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
         <Route path="/events/all" element={<ProtectedRoute><AllEventsPage /></ProtectedRoute>} />

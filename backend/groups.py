@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from utils.auth_dependency import get_current_user
 from utils.sql_helper import SQLHelper
 from utils.db import engine
+from utils.storage import delete_uploaded_image
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 sql = SQLHelper()
@@ -115,7 +116,7 @@ async def get_group(group_id: str, current_user: dict = Depends(get_current_user
 
 
 @router.delete("/{group_id}")
-async def delete_group(group_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_group(group_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     query = sql.load_query("sql_queries/groups/delete_group.sql")
     with engine.connect() as connection:
         result = connection.execute(query, {
@@ -126,6 +127,7 @@ async def delete_group(group_id: str, current_user: dict = Depends(get_current_u
         connection.commit()
     if row is None:
         raise HTTPException(status_code=403, detail="Only the group owner can delete the group")
+    background_tasks.add_task(delete_uploaded_image, row["image_url"])
     return {"message": "Group deleted"}
 
 

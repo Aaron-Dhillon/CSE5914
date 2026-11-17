@@ -82,3 +82,15 @@
 @media (max-width: 767px) {
   .topnav-center { display:none; }
 }
+
+.site-footer {
+  padding: var(--space-lg) 0 var(--space-md);
+  text-align: center;
+  font-size: 13px;
+}
+.site-footer a { color: var(--color-text-muted); }
+
+.privacy { max-width: 760px; margin-inline: auto; line-height: 1.6; }
+.privacy h2 { margin-top: 1.6em; }
+.privacy ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.privacy a { text-decoration: underline; }

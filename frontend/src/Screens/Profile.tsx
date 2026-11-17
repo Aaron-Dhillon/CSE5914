@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Input, Text } from '../components/ui'
 import '../styles/profile.css'
-import { getProfile, updateProfile } from '../services/auth'
+import { deleteAccount, getProfile, updateProfile } from '../services/auth'
 import { useAuthContext } from '../context/AuthContext'
 import { getCategories, type CategoryItem } from '../services/events'
 import {
@@ -380,8 +380,65 @@ const Profile: React.FC = () => {
             {saving ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
+
+        <DeleteAccountPanel />
       </MainContent>
     </PageWrapper>
+  )
+}
+
+
+/** Asks for the password again, then deletes the account and everything the user made. */
+function DeleteAccountPanel() {
+  const { logout } = useAuthContext()
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    if (!password || deleting) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteAccount(password)
+      logout()
+      window.location.href = '/'
+    } catch (e: any) {
+      setError(e?.message || "Couldn't delete your account. Try again.")
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <section className="card profile-panel danger-panel">
+      <h2>Delete account</h2>
+      <p className="muted">
+        This permanently deletes your profile, preferences, follows, the events and groups you created (and their
+        photos), and your spot in other groups and events. It can't be undone.
+      </p>
+      {open ? (
+        <div className="form-stack">
+          <Input
+            label="Enter your password to confirm"
+            type="password"
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+          />
+          {error ? <Text as="p" className="error-text">{error}</Text> : null}
+          <div className="danger-actions">
+            <Button variant="ghost" onClick={() => { setOpen(false); setPassword(''); setError(null) }} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} disabled={!password || deleting}>
+              {deleting ? 'Deleting…' : 'Delete my account forever'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="ghost" onClick={() => setOpen(true)}>Delete account…</Button>
+      )}
+    </section>
   )
 }
 
