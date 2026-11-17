@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from utils.sql_helper import SQLHelper
 from utils.db import engine
+from utils.storage import delete_uploaded_image
+from chat import DEMO_USER_ID
 import base64
 import os
 
@@ -304,14 +306,68 @@ async def update_profile(profile: ProfileUpdate, current_user: dict = Depends(ge
 
     return dict(updated_user)
 
+class DeleteAccount(BaseModel):
+    password: str
+
+
+# Everything tied to one user, children before parents, all in one transaction.
+DELETE_ACCOUNT_STEPS = [
+    # Events they created, and everything attached to them
+    "DELETE FROM event_attendees WHERE event_id IN (SELECT id FROM events WHERE created_by = :uid)",
+    "DELETE FROM group_events WHERE event_id IN (SELECT id FROM events WHERE created_by = :uid)",
+    "DELETE FROM events WHERE created_by = :uid",
+    # Groups they own, and everything attached to them
+    "DELETE FROM group_events WHERE group_id IN (SELECT id FROM groups WHERE created_by = :uid)",
+    "DELETE FROM group_join_requests WHERE group_id IN (SELECT id FROM groups WHERE created_by = :uid)",
+    "DELETE FROM group_members WHERE group_id IN (SELECT id FROM groups WHERE created_by = :uid)",
+    "DELETE FROM groups WHERE created_by = :uid",
+    # Their own rows elsewhere
+    "DELETE FROM event_attendees WHERE user_id = :uid",
+    "DELETE FROM event_option_attendees WHERE user_id = :uid",
+    "DELETE FROM group_members WHERE user_id = :uid",
+    "DELETE FROM group_join_requests WHERE user_id = :uid",
+    "DELETE FROM follows WHERE follower_id = :uid OR following_id = :uid",
+    "DELETE FROM user_preferences_categories WHERE user_id = :uid",
+    "DELETE FROM user_preferences_time WHERE user_id = :uid",
+    "DELETE FROM user_preferences WHERE user_id = :uid",
+    "DELETE FROM profile_tokens WHERE id = :uid",
+    "DELETE FROM profiles WHERE id = :uid",
+]
+
+
 @router.delete("/delete_account")
-async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
-    pass
+async def delete_account(data: DeleteAccount, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+    """Deletes the signed-in user's account and everything they made. Needs their password again."""
+    user_id = current_user["user_id"]
+    if user_id == DEMO_USER_ID:
+        raise HTTPException(status_code=403, detail="The demo account can't be deleted.")
+    limit_key = f"delete:{user_id}"
+    rate_limit.check(limit_key, LOGIN_LIMITS, "failed password attempts")
 
+    with engine.connect() as connection:
+        user = connection.execute(text("SELECT password FROM profiles WHERE id = :uid"), {"uid": user_id}).mappings().fetchone()
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+    ok, _ = verify_password(data.password, user["password"])
+    if not ok:
+        rate_limit.record(limit_key)
+        raise HTTPException(status_code=403, detail="That password isn't right.")  # 401 would sign them out
+    rate_limit.clear(limit_key)
 
-@router.delete("{user_id}")
-async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
-    pass
+    try:
+        with engine.begin() as connection:  # all or nothing: a failed step deletes nothing
+            images = connection.execute(
+                text("SELECT image_url FROM events WHERE created_by = :uid UNION SELECT image_url FROM groups WHERE created_by = :uid"),
+                {"uid": user_id},
+            ).scalars().all()
+            for step in DELETE_ACCOUNT_STEPS:
+                connection.execute(text(step), {"uid": user_id})
+    except Exception as e:  # noqa: BLE001
+        print(f"Account deletion failed for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Couldn't delete your account. Nothing was removed; try again later.")
+    for url in images:
+        background_tasks.add_task(delete_uploaded_image, url)
+    return {"message": "Account deleted"}
 
 
 @router.post("/{user_id}/modify")

@@ -49,3 +49,7 @@ export async function getProfile(id: string) {
 export async function updateProfile(profile: UpdateProfileRequest) {
   return request('/account/profile', { method: 'PUT', body: profile }) as Promise<ProfileResponse>
 }
+
+export function deleteAccount(password: string) {
+  return request('/account/delete_account', { method: 'DELETE', body: { password } })
+}

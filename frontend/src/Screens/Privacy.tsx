@@ -53,14 +53,15 @@ const Privacy: React.FC = () => {
 
           <h2>How long we keep it</h2>
           <p>
-            Your account and what you've created stay until they're deleted. When you delete an event or group, its
-            uploaded photo is deleted too.
+            Your account and what you've created stay until you delete them. When you delete an event or group, its
+            uploaded photo is deleted too. Deleting your account removes your profile, preferences, follows, the events
+            and groups you created (with their photos) and your spot in other groups and events, right away.
           </p>
 
           <h2>Your choices</h2>
           <p>
-            You can edit your profile any time. To get a copy of your data or have your account deleted, contact the
-            team through our <a href={REPO_URL} target="_blank" rel="noreferrer">GitHub page</a>.
+            You can edit your profile any time, and delete your account from your profile page. To get a copy of your
+            data, contact the team through our <a href={REPO_URL} target="_blank" rel="noreferrer">GitHub page</a>.
           </p>
 
           <h2>If you're struggling</h2>
